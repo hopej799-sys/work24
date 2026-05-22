@@ -2,3 +2,4 @@ streamlit
 requests
 openpyxl
 pandas
+supabase>=2.9.1,<2.30.0

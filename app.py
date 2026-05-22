@@ -3,12 +3,11 @@ import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
 import io
-import json
-from pathlib import Path
 from datetime import date, timedelta
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from supabase import create_client
 
 st.set_page_config(
     page_title="연계채용정보 모니터링",
@@ -30,20 +29,28 @@ COLUMNS = [
 ]
 
 STATUS_OPTIONS = ["미검토", "이상없음", "게재중단"]
-STORE_FILE = Path(__file__).parent / "memo_store.json"
 
 
+@st.cache_resource
+def _sb():
+    return create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
+
+
+@st.cache_data(ttl=5)
 def load_store() -> dict:
-    if STORE_FILE.exists():
-        try:
-            return json.loads(STORE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-    return {}
+    rows = _sb().table("memo_store").select("wanted_auth_no, status, memo").execute().data
+    return {r["wanted_auth_no"]: {"처리상태": r["status"], "메모": r["memo"]} for r in rows}
 
 
 def save_store(store: dict):
-    STORE_FILE.write_text(json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8")
+    sb = _sb()
+    to_delete = set(load_store().keys()) - set(store.keys())
+    if to_delete:
+        sb.table("memo_store").delete().in_("wanted_auth_no", list(to_delete)).execute()
+    if store:
+        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"]} for k, v in store.items()]
+        sb.table("memo_store").upsert(rows).execute()
+    load_store.clear()
 
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
