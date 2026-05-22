@@ -1,0 +1,6 @@
+memo_store.json
+.claude/
+.playwright-mcp/
+__pycache__/
+*.pyc
+.env
