@@ -52,6 +52,7 @@ def save_store(store: dict):
         sb.table("memo_store").upsert(rows).execute()
     load_store.clear()
 
+
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
     st.title("🔍 조회 조건")
@@ -189,17 +190,6 @@ def make_excel(df, start, end):
     return buf
 
 
-# ── 편집 딕셔너리를 raw_df에 적용 ─────────────────
-def apply_edits(df: pd.DataFrame, edits: dict) -> pd.DataFrame:
-    df = df.copy()
-    for idx in df.index:
-        key = df.at[idx, "공고번호"]
-        if key and key in edits:
-            df.at[idx, "처리상태"] = edits[key].get("처리상태", "미검토")
-            df.at[idx, "메모"]     = edits[key].get("메모", "")
-    return df
-
-
 # ── 메인 ───────────────────────────────────────
 st.title("📋 연계채용정보 모니터링 결과조회")
 st.caption("한국고용정보원 Work24 Open API")
@@ -227,33 +217,35 @@ if search_btn:
     if exclude_employment:
         df = df[~df["에러내용"].str.contains("고용형태", na=False)].reset_index(drop=True)
 
-    # raw_df는 API 원본 그대로 유지, 편집은 edits 딕셔너리로만 관리
-    st.session_state["raw_df"] = df
-    st.session_state["edits"]  = load_store()   # 파일에서 이전 저장 복원
+    # Supabase에 저장된 처리상태/메모를 조회 결과에 반영
+    stored = load_store()
+    for idx in df.index:
+        key = df.at[idx, "공고번호"]
+        if key and key in stored:
+            df.at[idx, "처리상태"] = stored[key]["처리상태"]
+            df.at[idx, "메모"] = stored[key]["메모"]
+
+    st.session_state["base_df"] = df
     st.session_state["period"] = (start_date, end_date)
 
 
-if "raw_df" not in st.session_state:
+if "base_df" not in st.session_state:
     st.info("← 왼쪽 사이드바에서 조회 조건을 입력하고 **조회** 버튼을 누르세요.")
     st.stop()
 
-raw_df      = st.session_state["raw_df"]
-edits       = st.session_state["edits"]        # {공고번호: {처리상태, 메모}}
+base_df = st.session_state["base_df"]
 start_saved, end_saved = st.session_state["period"]
 
-# 편집 딕셔너리를 raw_df에 적용해서 화면용 df 생성
-df_display = apply_edits(raw_df, edits)
-
-if df_display.empty:
+if base_df.empty:
     st.info("조회된 데이터가 없습니다.")
     st.stop()
 
 # 요약 지표
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("총 건수",   f"{len(df_display):,}건")
-c2.metric("법위반의심", f"{(df_display['법위반의심 여부'] == 'Y').sum():,}건")
-c3.metric("미검토",    f"{(df_display['처리상태'] == '미검토').sum():,}건")
-c4.metric("처리완료",  f"{(df_display['처리상태'] != '미검토').sum():,}건")
+c1.metric("총 건수",   f"{len(base_df):,}건")
+c2.metric("법위반의심", f"{(base_df['법위반의심 여부'] == 'Y').sum():,}건")
+c3.metric("미검토",    f"{(base_df['처리상태'] == '미검토').sum():,}건")
+c4.metric("처리완료",  f"{(base_df['처리상태'] != '미검토').sum():,}건")
 
 st.divider()
 
@@ -270,7 +262,7 @@ with st.expander("🔧 결과 필터", expanded=True):
         memo_only = st.checkbox("메모 있는것만")
 
 # 필터 적용
-filtered = df_display.copy()
+filtered = base_df.copy()
 if status_filter != "전체":
     filtered = filtered[filtered["처리상태"] == status_filter]
 if err_type_filter == "사전필터링":
@@ -282,7 +274,7 @@ if law_only:
 if memo_only:
     filtered = filtered[filtered["메모"].str.strip().ne("")]
 
-st.caption(f"필터 결과: {len(filtered):,}건 / 전체 {len(df_display):,}건")
+st.caption(f"필터 결과: {len(filtered):,}건 / 전체 {len(base_df):,}건")
 
 filtered_display = filtered.reset_index(drop=True)
 
@@ -295,8 +287,8 @@ edited = st.data_editor(
             required=True,
             width="small",
         ),
-        "메모":       st.column_config.TextColumn("메모",       width="medium"),
-        "에러내용":   st.column_config.TextColumn("에러내용",   width="large"),
+        "메모":           st.column_config.TextColumn("메모",           width="medium"),
+        "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
         "법령 맵핑 내용": st.column_config.TextColumn("법령 맵핑 내용", width="large"),
     },
     hide_index=True,
@@ -305,8 +297,8 @@ edited = st.data_editor(
     key="data_editor",
 )
 
-# 현재 화면의 편집 상태를 edits 딕셔너리에 반영
-# prev(edits 딕셔너리)와 비교해서 dirty 감지, 항상 현재값을 edits에 기록
+# data_editor 편집 결과를 base_df에 동기화
+updated = st.session_state["base_df"].copy()
 for i in range(len(edited)):
     wanted     = edited.iloc[i]["공고번호"]
     new_status = edited.iloc[i]["처리상태"]
@@ -314,17 +306,21 @@ for i in range(len(edited)):
     new_memo   = "" if pd.isna(raw_memo) else str(raw_memo)
     if not wanted:
         continue
-    if new_status != "미검토" or new_memo.strip():
-        edits[wanted] = {"처리상태": new_status, "메모": new_memo}
-    elif wanted in edits:
-        del edits[wanted]
-st.session_state["edits"] = edits
+    mask = updated["공고번호"] == wanted
+    if mask.any():
+        updated.loc[mask, "처리상태"] = new_status
+        updated.loc[mask, "메모"]     = new_memo
+st.session_state["base_df"] = updated
 
 st.divider()
 
-# 현재 의미있는 edits가 파일에 저장된 내용과 다르면 미저장 변경사항 있음
-_meaningful = {k: v for k, v in edits.items() if v["처리상태"] != "미검토" or v["메모"].strip()}
-has_changes = _meaningful != load_store()
+# 저장 여부 판단: base_df의 의미있는 편집 vs Supabase 저장값 비교
+_cur = {
+    row["공고번호"]: {"처리상태": row["처리상태"], "메모": str(row["메모"] or "")}
+    for _, row in st.session_state["base_df"].iterrows()
+    if row["공고번호"] and (row["처리상태"] != "미검토" or str(row["메모"] or "").strip())
+}
+has_changes = _cur != load_store()
 
 btn_col, dl_col = st.columns([1, 2])
 
@@ -332,16 +328,20 @@ with btn_col:
     save_label = "💾 저장" + (" ●" if has_changes else "")
     if st.button(save_label, type="primary", use_container_width=True, key="save_btn"):
         store = {
-            k: v for k, v in edits.items()
-            if v["처리상태"] != "미검토" or v["메모"].strip()
+            row["공고번호"]: {"처리상태": row["처리상태"], "메모": str(row["메모"] or "")}
+            for _, row in st.session_state["base_df"].iterrows()
+            if row["공고번호"] and (row["처리상태"] != "미검토" or str(row["메모"] or "").strip())
         }
-        save_store(store)
-        st.toast(f"저장 완료 ({len(store)}건)", icon="✅")
+        try:
+            save_store(store)
+            st.toast(f"저장 완료 ({len(store)}건)", icon="✅")
+        except Exception as e:
+            st.error(f"저장 실패: {e}")
+            st.stop()
         st.rerun()
 
 with dl_col:
-    df_export = apply_edits(raw_df, edits)
-    excel_buf = make_excel(df_export, start_saved, end_saved)
+    excel_buf = make_excel(st.session_state["base_df"], start_saved, end_saved)
     filename  = f"모니터링결과_{start_saved.strftime('%Y%m%d')}-{end_saved.strftime('%Y%m%d')}.xlsx"
     st.download_button(
         label="📥 엑셀 다운로드 (전체)",
