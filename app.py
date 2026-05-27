@@ -81,7 +81,8 @@ def capture_edits():
 with st.sidebar:
     st.title("🔍 조회 조건")
 
-    auth_key = st.text_input("인증키 *", type="password",
+    _saved_key = st.secrets.get("auth_key", "")
+    auth_key = st.text_input("인증키 *", value=_saved_key, type="password",
                               placeholder="발급받은 인증키 입력")
 
     st.markdown("**조회 기간 *** (최대 3일)")
