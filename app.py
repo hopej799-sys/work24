@@ -92,7 +92,6 @@ with st.sidebar:
         end_date = st.date_input("종료일", value=date.today())
 
     wanted_auth_no = st.text_input("공고번호 (선택)", placeholder="예) K123456789")
-    law_volt = st.selectbox("법위반의심 여부 (선택)", ["전체", "Y (의심 항목만)"])
 
     st.divider()
     st.markdown("**조회 필터**")
@@ -118,7 +117,7 @@ def validate():
     return True
 
 
-def fetch(start, end, auth, wanted_no, law_y):
+def fetch(start, end, auth, wanted_no):
     params = {
         "authKey":    auth,
         "returnType": "XML",
@@ -128,8 +127,6 @@ def fetch(start, end, auth, wanted_no, law_y):
     }
     if wanted_no:
         params["wantedAuthNo"] = wanted_no
-    if law_y == "Y (의심 항목만)":
-        params["lawVoltDobtYn"] = "Y"
     resp = requests.get(API_URL, params=params, timeout=30)
     resp.raise_for_status()
     return resp.text
@@ -218,7 +215,7 @@ if search_btn:
 
     with st.spinner("데이터 조회 중..."):
         try:
-            xml_text = fetch(start_date, end_date, auth_key, wanted_auth_no, law_volt)
+            xml_text = fetch(start_date, end_date, auth_key, wanted_auth_no)
         except requests.HTTPError as e:
             st.error(f"API 오류: {e}")
             st.stop()
