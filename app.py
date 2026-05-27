@@ -279,12 +279,11 @@ law_count = (base_df["법위반의심 여부"] == "Y").sum()
     if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "게재중단"
 )
 미검토_count = total - 이상없음_count - 게재중단_count
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4 = st.columns(4)
 c1.metric("총 건수",   f"{total:,}건")
 c2.metric("법위반의심", f"{law_count:,}건")
 c3.metric("미검토",    f"{미검토_count:,}건")
-c4.metric("이상없음",  f"{이상없음_count:,}건")
-c5.metric("게재중단",  f"{게재중단_count:,}건")
+c4.metric("처리완료",  f"이상없음:{이상없음_count:,}건 / 게재중단:{게재중단_count:,}건")
 
 st.divider()
 
