@@ -103,6 +103,19 @@ with st.sidebar:
 
     search_btn = st.button("🔎 조회", use_container_width=True, type="primary")
 
+    st.divider()
+    st.markdown("**관리**")
+    if st.button("🗑️ 메모 전체 초기화", use_container_width=True):
+        _sb().table("memo_store").update({"memo": ""}).neq("wanted_auth_no", "").execute()
+        load_store.clear()
+        if "base_df" in st.session_state:
+            st.session_state["base_df"]["메모"] = ""
+        if "pending_edits" in st.session_state:
+            for k in st.session_state["pending_edits"]:
+                st.session_state["pending_edits"][k]["메모"] = ""
+        st.toast("메모 초기화 완료", icon="🗑️")
+        st.rerun()
+
 
 def validate():
     if not auth_key:
