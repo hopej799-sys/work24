@@ -48,41 +48,41 @@ def save_store(store: dict):
     if to_delete:
         sb.table("memo_store").delete().in_("wanted_auth_no", list(to_delete)).execute()
     if store:
-        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"]} for k, v in store.items()]
+        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"]}
+                for k, v in store.items()]
         sb.table("memo_store").upsert(rows).execute()
     load_store.clear()
 
 
-def build_store(base_df: pd.DataFrame, visible_wanted: set, edited: pd.DataFrame) -> dict:
-    """현재 화면(edited) + 필터로 숨겨진 행(base_df)을 합쳐 저장할 dict 생성"""
-    store = {}
-    # 필터로 숨겨진 행은 base_df 값 사용
-    for _, row in base_df[~base_df["공고번호"].isin(visible_wanted)].iterrows():
-        wanted = row["공고번호"]
-        status = row["처리상태"]
-        memo   = str(row["메모"] or "")
-        if wanted and (status != "미검토" or memo.strip()):
-            store[wanted] = {"처리상태": status, "메모": memo}
-    # 현재 화면 행은 edited 값 사용 (data_editor의 실제 현재 값)
-    for i in range(len(edited)):
-        wanted = edited.iloc[i]["공고번호"]
-        status = edited.iloc[i]["처리상태"]
-        raw    = edited.iloc[i]["메모"]
-        memo   = "" if pd.isna(raw) else str(raw)
+def capture_edits():
+    """data_editor 변경 즉시 호출 — pending_edits에 안전하게 저장."""
+    diff = st.session_state.get("data_editor", {})
+    fd   = st.session_state.get("_fd", pd.DataFrame())
+    for str_idx, changes in diff.get("edited_rows", {}).items():
+        row_idx = int(str_idx)
+        if row_idx >= len(fd):
+            continue
+        wanted = fd.iloc[row_idx]["공고번호"]
         if not wanted:
             continue
-        if status != "미검토" or memo.strip():
-            store[wanted] = {"처리상태": status, "메모": memo}
-        elif wanted in store:
-            del store[wanted]
-    return store
+        base_status = fd.iloc[row_idx]["처리상태"]
+        base_memo   = str(fd.iloc[row_idx]["메모"] or "")
+        new_status  = changes.get("처리상태", base_status)
+        new_memo    = str(changes.get("메모", base_memo) or "")
+        if new_status != "미검토" or new_memo.strip():
+            st.session_state["pending_edits"][wanted] = {
+                "처리상태": new_status, "메모": new_memo
+            }
+        elif wanted in st.session_state["pending_edits"]:
+            del st.session_state["pending_edits"][wanted]
 
 
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
     st.title("🔍 조회 조건")
 
-    auth_key = st.text_input("인증키 *", type="password", placeholder="발급받은 인증키 입력")
+    auth_key = st.text_input("인증키 *", type="password",
+                              placeholder="발급받은 인증키 입력")
 
     st.markdown("**조회 기간 *** (최대 3일)")
     col1, col2 = st.columns(2)
@@ -104,7 +104,6 @@ with st.sidebar:
     search_btn = st.button("🔎 조회", use_container_width=True, type="primary")
 
 
-# ── 유효성 검사 ────────────────────────────────
 def validate():
     if not auth_key:
         st.error("인증키를 입력해 주세요.")
@@ -119,7 +118,6 @@ def validate():
     return True
 
 
-# ── API 호출 ───────────────────────────────────
 def fetch(start, end, auth, wanted_no, law_y):
     params = {
         "authKey":    auth,
@@ -132,13 +130,11 @@ def fetch(start, end, auth, wanted_no, law_y):
         params["wantedAuthNo"] = wanted_no
     if law_y == "Y (의심 항목만)":
         params["lawVoltDobtYn"] = "Y"
-
     resp = requests.get(API_URL, params=params, timeout=30)
     resp.raise_for_status()
     return resp.text
 
 
-# ── XML 파싱 ───────────────────────────────────
 def parse(xml_text):
     root = ET.fromstring(xml_text)
     rows = []
@@ -154,7 +150,6 @@ def parse(xml_text):
     return df
 
 
-# ── 엑셀 생성 ──────────────────────────────────
 def make_excel(df, start, end):
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -194,7 +189,6 @@ def make_excel(df, start, end):
             row_fill = red_fill
         else:
             row_fill = alt_fill if ri % 2 == 1 else None
-
         for ci, (col, val) in enumerate(zip(df.columns, row), 1):
             c = ws.cell(row=ri, column=ci, value=val)
             c.font = cell_font; c.border = border
@@ -206,7 +200,6 @@ def make_excel(df, start, end):
     col_widths = [12, 30, 18, 20, 20, 20, 20, 50, 16, 40]
     for i, w in enumerate(col_widths[:ncols], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
-
     ws.freeze_panes = "A3"
 
     buf = io.BytesIO()
@@ -242,7 +235,7 @@ if search_btn:
     if exclude_employment:
         df = df[~df["에러내용"].str.contains("고용형태", na=False)].reset_index(drop=True)
 
-    # Supabase 저장값을 base_df에 반영 (이후 base_df는 수정하지 않음)
+    # Supabase 저장값 반영 (base_df는 이후 수정 안 함)
     stored = load_store()
     for idx in df.index:
         key = df.at[idx, "공고번호"]
@@ -250,32 +243,43 @@ if search_btn:
             df.at[idx, "처리상태"] = stored[key]["처리상태"]
             df.at[idx, "메모"]     = stored[key]["메모"]
 
-    st.session_state["base_df"] = df
-    st.session_state["period"]  = (start_date, end_date)
-    st.session_state.pop("data_editor", None)  # 이전 편집 diff 초기화
+    st.session_state["base_df"]       = df
+    st.session_state["period"]        = (start_date, end_date)
+    st.session_state["pending_edits"] = {}   # 새 조회 시 초기화
+    st.session_state.pop("data_editor", None)
 
 
 if "base_df" not in st.session_state:
     st.info("← 왼쪽 사이드바에서 조회 조건을 입력하고 **조회** 버튼을 누르세요.")
     st.stop()
 
+if "pending_edits" not in st.session_state:
+    st.session_state["pending_edits"] = {}
+
 base_df = st.session_state["base_df"]
+pending = st.session_state["pending_edits"]
 start_saved, end_saved = st.session_state["period"]
 
 if base_df.empty:
     st.info("조회된 데이터가 없습니다.")
     st.stop()
 
-# 요약 지표 (base_df 기준)
+# ── 요약 지표 (pending_edits 반영) ─────────────
+total     = len(base_df)
+law_count = (base_df["법위반의심 여부"] == "Y").sum()
+처리완료  = sum(
+    1 for _, r in base_df.iterrows()
+    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) != "미검토"
+)
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("총 건수",   f"{len(base_df):,}건")
-c2.metric("법위반의심", f"{(base_df['법위반의심 여부'] == 'Y').sum():,}건")
-c3.metric("미검토",    f"{(base_df['처리상태'] == '미검토').sum():,}건")
-c4.metric("처리완료",  f"{(base_df['처리상태'] != '미검토').sum():,}건")
+c1.metric("총 건수",   f"{total:,}건")
+c2.metric("법위반의심", f"{law_count:,}건")
+c3.metric("미검토",    f"{total - 처리완료:,}건")
+c4.metric("처리완료",  f"{처리완료:,}건")
 
 st.divider()
 
-# 결과 필터
+# ── 결과 필터 ─────────────────────────────────
 with st.expander("🔧 결과 필터", expanded=True):
     f1, f2, f3 = st.columns([2, 2, 1])
     with f1:
@@ -287,8 +291,15 @@ with st.expander("🔧 결과 필터", expanded=True):
         law_only  = st.checkbox("법령 맵핑 내용 있는것만")
         memo_only = st.checkbox("메모 있는것만")
 
-# 필터 적용
-filtered = base_df.copy()
+# pending_edits를 base_df에 반영한 뷰 생성 (필터/표시용)
+view_df = base_df.copy()
+for idx in view_df.index:
+    k = view_df.at[idx, "공고번호"]
+    if k and k in pending:
+        view_df.at[idx, "처리상태"] = pending[k]["처리상태"]
+        view_df.at[idx, "메모"]     = pending[k]["메모"]
+
+filtered = view_df.copy()
 if status_filter != "전체":
     filtered = filtered[filtered["처리상태"] == status_filter]
 if err_type_filter == "사전필터링":
@@ -300,19 +311,17 @@ if law_only:
 if memo_only:
     filtered = filtered[filtered["메모"].str.strip().ne("")]
 
-filtered_display  = filtered.reset_index(drop=True)
-visible_wanted    = set(filtered_display["공고번호"])
+filtered_display = filtered.reset_index(drop=True)
+st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
 
-st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {len(base_df):,}건")
+# on_change 콜백이 참조할 filtered_display를 session_state에 저장
+st.session_state["_fd"] = filtered_display
 
 edited = st.data_editor(
     filtered_display,
     column_config={
         "처리상태": st.column_config.SelectboxColumn(
-            "처리상태",
-            options=STATUS_OPTIONS,
-            required=True,
-            width="small",
+            "처리상태", options=STATUS_OPTIONS, required=True, width="small",
         ),
         "메모":           st.column_config.TextColumn("메모",           width="medium"),
         "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
@@ -322,12 +331,31 @@ edited = st.data_editor(
     use_container_width=True,
     height=450,
     key="data_editor",
+    on_change=capture_edits,   # ← 변경 즉시 pending_edits에 저장
 )
 
 st.divider()
 
-# 저장 여부 판단
-current_store = build_store(base_df, visible_wanted, edited)
+# ── 저장 여부 판단 ────────────────────────────
+# 저장할 최종 store: base_df 비-미검토 행 + pending_edits 합산
+def build_final_store() -> dict:
+    store = {}
+    for _, row in base_df.iterrows():
+        k = row["공고번호"]
+        s = row["처리상태"]
+        m = str(row["메모"] or "")
+        if k and (s != "미검토" or m.strip()):
+            store[k] = {"처리상태": s, "메모": m}
+    for k, v in pending.items():
+        s = v["처리상태"]
+        m = str(v.get("메모", "") or "")
+        if s != "미검토" or m.strip():
+            store[k] = {"처리상태": s, "메모": m}
+        elif k in store:
+            del store[k]
+    return store
+
+current_store = build_final_store()
 has_changes   = current_store != load_store()
 
 btn_col, dl_col = st.columns([1, 2])
@@ -341,30 +369,25 @@ with btn_col:
             st.error(f"저장 실패: {e}")
             st.stop()
 
-        # base_df에 저장된 값 반영 후 diff 초기화
+        # base_df를 저장된 상태로 업데이트
         new_base = base_df.copy()
         for idx in new_base.index:
-            key = new_base.at[idx, "공고번호"]
-            if key and key in current_store:
-                new_base.at[idx, "처리상태"] = current_store[key]["처리상태"]
-                new_base.at[idx, "메모"]     = current_store[key]["메모"]
-            elif key:
+            k = new_base.at[idx, "공고번호"]
+            if k and k in current_store:
+                new_base.at[idx, "처리상태"] = current_store[k]["처리상태"]
+                new_base.at[idx, "메모"]     = current_store[k]["메모"]
+            elif k:
                 new_base.at[idx, "처리상태"] = "미검토"
                 new_base.at[idx, "메모"]     = ""
-        st.session_state["base_df"] = new_base
+        st.session_state["base_df"]       = new_base
+        st.session_state["pending_edits"] = {}   # pending 초기화 (위젯 키 아님 → 안전)
 
         st.toast(f"저장 완료 ({len(current_store)}건)", icon="✅")
         st.rerun()
 
 with dl_col:
-    # 엑셀 = base_df에 current_store 반영한 전체 데이터
-    export_df = base_df.copy()
-    for idx in export_df.index:
-        key = export_df.at[idx, "공고번호"]
-        if key and key in current_store:
-            export_df.at[idx, "처리상태"] = current_store[key]["처리상태"]
-            export_df.at[idx, "메모"]     = current_store[key]["메모"]
-
+    # 엑셀: pending_edits까지 반영한 전체 데이터
+    export_df = view_df.copy()
     excel_buf = make_excel(export_df, start_saved, end_saved)
     filename  = f"모니터링결과_{start_saved.strftime('%Y%m%d')}-{end_saved.strftime('%Y%m%d')}.xlsx"
     st.download_button(
