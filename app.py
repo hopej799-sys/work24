@@ -270,15 +270,21 @@ if base_df.empty:
 # ── 요약 지표 (pending_edits 반영) ─────────────
 total     = len(base_df)
 law_count = (base_df["법위반의심 여부"] == "Y").sum()
-처리완료  = sum(
+이상없음_count = sum(
     1 for _, r in base_df.iterrows()
-    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) != "미검토"
+    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "이상없음"
 )
-c1, c2, c3, c4 = st.columns(4)
+게재중단_count = sum(
+    1 for _, r in base_df.iterrows()
+    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "게재중단"
+)
+미검토_count = total - 이상없음_count - 게재중단_count
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("총 건수",   f"{total:,}건")
 c2.metric("법위반의심", f"{law_count:,}건")
-c3.metric("미검토",    f"{total - 처리완료:,}건")
-c4.metric("처리완료",  f"{처리완료:,}건")
+c3.metric("미검토",    f"{미검토_count:,}건")
+c4.metric("이상없음",  f"{이상없음_count:,}건")
+c5.metric("게재중단",  f"{게재중단_count:,}건")
 
 st.divider()
 
