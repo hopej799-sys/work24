@@ -352,7 +352,6 @@ with btn_col:
                 new_base.at[idx, "처리상태"] = "미검토"
                 new_base.at[idx, "메모"]     = ""
         st.session_state["base_df"] = new_base
-        st.session_state.pop("data_editor", None)
 
         st.toast(f"저장 완료 ({len(current_store)}건)", icon="✅")
         st.rerun()
