@@ -293,8 +293,9 @@ for idx in view_df.index:
         view_df.at[idx, "처리상태"] = pending[k]["처리상태"]
         view_df.at[idx, "메모"]     = pending[k]["메모"]
 
-law_map_count = view_df["법령 맵핑 내용"].str.strip().ne("").sum()
-memo_count    = view_df["메모"].str.strip().ne("").sum()
+law_map_count  = view_df["법령 맵핑 내용"].str.strip().ne("").sum()
+memo_count     = view_df["메모"].str.strip().ne("").sum()
+law_volt_count = (view_df["법위반의심 여부"] == "Y").sum()
 
 # ── 결과 필터 ─────────────────────────────────
 with st.expander("🔧 결과 필터", expanded=True):
@@ -305,8 +306,9 @@ with st.expander("🔧 결과 필터", expanded=True):
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링", "구인 모니터링"])
     with f3:
         st.markdown("<br>", unsafe_allow_html=True)
-        law_only  = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)")
-        memo_only = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
+        law_volt_only = st.checkbox(f"법위반의심 Y만 ({law_volt_count:,}건)")
+        law_only      = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)")
+        memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
 
 filtered = view_df.copy()
 if status_filter != "전체":
@@ -315,6 +317,8 @@ if err_type_filter == "사전필터링":
     filtered = filtered[filtered["오류구분"].str.contains("사전", na=False)]
 elif err_type_filter == "구인 모니터링":
     filtered = filtered[filtered["오류구분"].str.contains("구인", na=False)]
+if law_volt_only:
+    filtered = filtered[filtered["법위반의심 여부"] == "Y"]
 if law_only:
     filtered = filtered[filtered["법령 맵핑 내용"].str.strip().ne("")]
 if memo_only:
