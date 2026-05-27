@@ -269,7 +269,6 @@ if base_df.empty:
 
 # ── 요약 지표 (pending_edits 반영) ─────────────
 total     = len(base_df)
-law_count = (base_df["법위반의심 여부"] == "Y").sum()
 이상없음_count = sum(
     1 for _, r in base_df.iterrows()
     if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "이상없음"
@@ -279,13 +278,23 @@ law_count = (base_df["법위반의심 여부"] == "Y").sum()
     if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "게재중단"
 )
 미검토_count = total - 이상없음_count - 게재중단_count
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("총 건수",   f"{total:,}건")
-c2.metric("법위반의심", f"{law_count:,}건")
-c3.metric("미검토",    f"{미검토_count:,}건")
-c4.metric("처리완료",  f"이상없음:{이상없음_count:,}건 / 게재중단:{게재중단_count:,}건")
+c1, c2, c3 = st.columns(3)
+c1.metric("총 건수",  f"{total:,}건")
+c2.metric("미검토",   f"{미검토_count:,}건")
+c3.metric("처리완료", f"이상없음:{이상없음_count:,}건 / 게재중단:{게재중단_count:,}건")
 
 st.divider()
+
+# pending_edits를 base_df에 반영한 뷰 생성 (필터/표시용)
+view_df = base_df.copy()
+for idx in view_df.index:
+    k = view_df.at[idx, "공고번호"]
+    if k and k in pending:
+        view_df.at[idx, "처리상태"] = pending[k]["처리상태"]
+        view_df.at[idx, "메모"]     = pending[k]["메모"]
+
+law_map_count = view_df["법령 맵핑 내용"].str.strip().ne("").sum()
+memo_count    = view_df["메모"].str.strip().ne("").sum()
 
 # ── 결과 필터 ─────────────────────────────────
 with st.expander("🔧 결과 필터", expanded=True):
@@ -296,16 +305,8 @@ with st.expander("🔧 결과 필터", expanded=True):
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링", "구인 모니터링"])
     with f3:
         st.markdown("<br>", unsafe_allow_html=True)
-        law_only  = st.checkbox("법령 맵핑 내용 있는것만")
-        memo_only = st.checkbox("메모 있는것만")
-
-# pending_edits를 base_df에 반영한 뷰 생성 (필터/표시용)
-view_df = base_df.copy()
-for idx in view_df.index:
-    k = view_df.at[idx, "공고번호"]
-    if k and k in pending:
-        view_df.at[idx, "처리상태"] = pending[k]["처리상태"]
-        view_df.at[idx, "메모"]     = pending[k]["메모"]
+        law_only  = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)")
+        memo_only = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
 
 filtered = view_df.copy()
 if status_filter != "전체":
