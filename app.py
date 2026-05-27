@@ -232,6 +232,9 @@ if search_btn:
         st.error(f"XML 파싱 오류: {e}")
         st.stop()
 
+    # 동일 공고번호는 최신 연계일시 기준 1건만 유지
+    df = df.sort_values("연계일시", ascending=False).drop_duplicates(subset=["공고번호"]).reset_index(drop=True)
+
     if exclude_employment:
         df = df[~df["에러내용"].str.contains("고용형태", na=False)].reset_index(drop=True)
 
