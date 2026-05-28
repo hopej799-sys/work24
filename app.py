@@ -190,15 +190,16 @@ def make_excel(df, start, end):
     ws.row_dimensions[2].height = 22
 
     long_cols = {"에러내용", "법령 맵핑 내용"}
-    for ri, row in enumerate(df.itertuples(index=False), 3):
-        status = row[0]
+    for ri, (_, row) in enumerate(df.iterrows(), 3):
+        status = row["처리상태"]
         if status == "이상없음":
             row_fill = green_fill
         elif status == "게재중단":
             row_fill = red_fill
         else:
             row_fill = alt_fill if ri % 2 == 1 else None
-        for ci, (col, val) in enumerate(zip(df.columns, row), 1):
+        for ci, col in enumerate(df.columns, 1):
+            val = row[col]
             c = ws.cell(row=ri, column=ci, value=val)
             c.font = cell_font; c.border = border
             c.alignment = left_align if col in long_cols else center_align
