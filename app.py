@@ -71,12 +71,9 @@ def capture_edits():
         base_memo   = str(fd.iloc[row_idx]["메모"] or "")
         new_status  = changes.get("처리상태", base_status)
         new_memo    = str(changes.get("메모", base_memo) or "")
-        if new_status != "미검토" or new_memo.strip():
-            st.session_state["pending_edits"][wanted] = {
-                "처리상태": new_status, "메모": new_memo
-            }
-        elif wanted in st.session_state["pending_edits"]:
-            del st.session_state["pending_edits"][wanted]
+        st.session_state["pending_edits"][wanted] = {
+            "처리상태": new_status, "메모": new_memo
+        }
 
 
 # ── 사이드바 ───────────────────────────────────
