@@ -54,6 +54,16 @@ def save_store(store: dict):
     load_store.clear()
 
 
+@st.cache_data(ttl=60)
+def load_setting(key: str) -> str:
+    rows = _sb().table("settings").select("value").eq("key", key).execute().data
+    return rows[0]["value"] if rows else ""
+
+def save_setting(key: str, value: str):
+    _sb().table("settings").upsert({"key": key, "value": value}).execute()
+    load_setting.clear()
+
+
 def capture_edits():
     """data_editor 변경 즉시 호출 — pending_edits에 안전하게 저장."""
     diff = st.session_state.get("data_editor", {})
@@ -81,16 +91,22 @@ def capture_edits():
 with st.sidebar:
     st.title("🔍 조회 조건")
 
-    _saved_key = (
-        st.secrets.get("auth_key", "") or
-        st.secrets.get("supabase", {}).get("auth_key", "")
-    )
+    _saved_key = load_setting("auth_key")
     if _saved_key:
         auth_key = _saved_key
         st.caption("🔑 인증키 자동 적용됨")
+        with st.expander("인증키 변경"):
+            _new_key = st.text_input("새 인증키", type="password", key="_new_key",
+                                     label_visibility="collapsed", placeholder="새 인증키 입력")
+            if st.button("변경 저장", use_container_width=True, key="_update_key") and _new_key.strip():
+                save_setting("auth_key", _new_key.strip())
+                st.rerun()
     else:
         auth_key = st.text_input("인증키 *", type="password",
                                   placeholder="발급받은 인증키 입력")
+        if st.button("인증키 저장", use_container_width=True, key="_save_key") and auth_key.strip():
+            save_setting("auth_key", auth_key.strip())
+            st.rerun()
 
     st.markdown("**조회 기간 *** (최대 3일)")
     col1, col2 = st.columns(2)
