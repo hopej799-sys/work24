@@ -81,7 +81,10 @@ def capture_edits():
 with st.sidebar:
     st.title("🔍 조회 조건")
 
-    _saved_key = st.secrets.get("auth_key", "")
+    _saved_key = (
+        st.secrets.get("auth_key", "") or
+        st.secrets.get("supabase", {}).get("auth_key", "")
+    )
     if _saved_key:
         auth_key = _saved_key
         st.caption("🔑 인증키 자동 적용됨")
