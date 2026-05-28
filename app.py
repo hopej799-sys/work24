@@ -337,12 +337,18 @@ if memo_only:
 filtered_display = filtered.reset_index(drop=True)
 st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
 
-# on_change 콜백이 참조할 filtered_display를 session_state에 저장
+# 처리상태별 색상 지시자 컬럼 (read-only)
+_EMOJI = {"이상없음": "🟢", "게재중단": "🔴", "미검토": "⬜"}
+display_with_color = filtered_display.copy()
+display_with_color.insert(0, "색상", display_with_color["처리상태"].map(_EMOJI).fillna("⬜"))
+
+# on_change 콜백이 참조할 filtered_display를 session_state에 저장 (색상 컬럼 없는 원본)
 st.session_state["_fd"] = filtered_display
 
 edited = st.data_editor(
-    filtered_display,
+    display_with_color,
     column_config={
+        "색상": st.column_config.TextColumn("", width="small"),
         "처리상태": st.column_config.SelectboxColumn(
             "처리상태", options=STATUS_OPTIONS, required=True, width="small",
         ),
@@ -350,6 +356,7 @@ edited = st.data_editor(
         "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
         "법령 맵핑 내용": st.column_config.TextColumn("법령 맵핑 내용", width="large"),
     },
+    disabled=["색상"],
     hide_index=True,
     use_container_width=True,
     height=450,
