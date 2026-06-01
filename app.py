@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import io
 from datetime import date, timedelta
+import calendar
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -121,6 +122,9 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**관리**")
+    if st.button("📊 월별 현황", use_container_width=True):
+        st.session_state["show_monthly"] = not st.session_state.get("show_monthly", False)
+        st.rerun()
     if st.button("🗑️ 메모 전체 초기화", use_container_width=True):
         _sb().table("memo_store").update({"memo": ""}).neq("wanted_auth_no", "").execute()
         load_store.clear()
@@ -259,6 +263,53 @@ def make_excel(df, start, end):
 # ── 메인 ───────────────────────────────────────
 st.title("📋 연계채용정보 모니터링 결과조회")
 st.caption("한국고용정보원 Work24 Open API")
+
+# ── 월별 현황 ───────────────────────────────────
+if st.session_state.get("show_monthly", False):
+    with st.container(border=True):
+        st.subheader("📊 월별 현황")
+        cy, cm, cbtn, cclose = st.columns([2, 2, 1, 1])
+        with cy:
+            sel_year  = st.selectbox("연도", [2025, 2026], index=1,
+                                      key="monthly_year", label_visibility="collapsed")
+        with cm:
+            sel_month = st.selectbox("월", list(range(1, 13)), index=date.today().month - 1,
+                                      format_func=lambda x: f"{x}월",
+                                      key="monthly_month", label_visibility="collapsed")
+        with cbtn:
+            run_monthly = st.button("조회", key="monthly_run", type="primary", use_container_width=True)
+        with cclose:
+            if st.button("닫기", key="monthly_close", use_container_width=True):
+                st.session_state["show_monthly"] = False
+                st.rerun()
+
+        if run_monthly:
+            if not auth_key:
+                st.error("인증키를 입력해 주세요.")
+            else:
+                m_start = date(sel_year, sel_month, 1)
+                m_end   = date(sel_year, sel_month, calendar.monthrange(sel_year, sel_month)[1])
+                with st.spinner(f"{sel_year}년 {sel_month}월 조회 중... (약 10~20초 소요)"):
+                    mraw = fetch_all(m_start, m_end, auth_key, "")
+                if mraw.empty:
+                    st.info("조회된 데이터가 없습니다.")
+                else:
+                    mraw["_d"] = mraw["연계일시"].str[:10]
+                    t_day = mraw["_d"].value_counts().sort_index().rename("전체(raw)")
+                    e_day = mraw["_d"][~mraw["에러내용"].str.contains("고용형태", na=False)].value_counts().sort_index().rename("고용형태 제외(raw)")
+                    u_day = (mraw.sort_values("연계일시", ascending=False)
+                                 .drop_duplicates(subset=["공고번호"])
+                                 .groupby("_d")["공고번호"].count()
+                                 .rename("유니크"))
+                    mdaily = pd.concat([t_day, e_day, u_day], axis=1).fillna(0).astype(int)
+                    mdaily.index.name = "날짜"
+                    mdaily = mdaily.reset_index()
+                    st.dataframe(mdaily, hide_index=True, use_container_width=True)
+                    mc1, mc2, mc3 = st.columns(3)
+                    mc1.metric("전체 합계(raw)", f"{mdaily['전체(raw)'].sum():,}건")
+                    mc2.metric("고용형태 제외(raw)", f"{mdaily['고용형태 제외(raw)'].sum():,}건")
+                    mc3.metric("유니크 합계", f"{mdaily['유니크'].sum():,}건")
+    st.divider()
 
 if search_btn:
     if not validate():
