@@ -28,7 +28,7 @@ COLUMNS = [
     ("lawMappCont",   "법령 맵핑 내용"),
 ]
 
-STATUS_OPTIONS = ["미검토", "이상없음", "게재중단"]
+STATUS_OPTIONS = ["미검토", "검토중", "이상없음", "게재중단"]
 
 
 @st.cache_resource
@@ -192,6 +192,7 @@ def make_excel(df, start, end):
     border       = Border(left=thin, right=thin, top=thin, bottom=thin)
     alt_fill     = PatternFill("solid", start_color="EAF2FB")
     green_fill   = PatternFill("solid", start_color="D9F2D9")
+    yellow_fill  = PatternFill("solid", start_color="FFF9CC")
     red_fill     = PatternFill("solid", start_color="FFD9D9")
 
     ncols = len(df.columns)
@@ -215,6 +216,8 @@ def make_excel(df, start, end):
             row_fill = green_fill
         elif status == "게재중단":
             row_fill = red_fill
+        elif status == "검토중":
+            row_fill = yellow_fill
         else:
             row_fill = alt_fill if ri % 2 == 1 else None
         for ci, col in enumerate(df.columns, 1):
@@ -359,7 +362,7 @@ filtered_display = filtered.reset_index(drop=True)
 st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
 
 # 처리상태별 색상 지시자 컬럼 (read-only)
-_EMOJI = {"이상없음": "🟢", "게재중단": "🔴", "미검토": "⬜"}
+_EMOJI = {"이상없음": "🟢", "게재중단": "🔴", "검토중": "🟡", "미검토": "⬜"}
 display_with_color = filtered_display.copy()
 display_with_color.insert(0, "색상", display_with_color["처리상태"].map(_EMOJI).fillna("⬜"))
 
