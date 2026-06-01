@@ -101,7 +101,7 @@ with st.sidebar:
     auth_key = st.text_input("인증키 *", type="password",
                               placeholder="발급받은 인증키 입력")
 
-    st.markdown("**조회 기간 *** (최대 3일)")
+    st.markdown("**조회 기간 *** (최대 31일)")
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input("시작일", value=date.today() - timedelta(days=2))
@@ -141,8 +141,8 @@ def validate():
     if delta < 0:
         st.error("종료일이 시작일보다 빠릅니다.")
         return False
-    if delta > 2:
-        st.error("최대 3일 범위까지만 조회 가능합니다.")
+    if delta > 30:
+        st.error("최대 31일 범위까지만 조회 가능합니다.")
         return False
     return True
 
@@ -160,6 +160,22 @@ def fetch(start, end, auth, wanted_no):
     resp = requests.get(API_URL, params=params, timeout=30)
     resp.raise_for_status()
     return resp.text
+
+
+def fetch_all(start, end, auth, wanted_no):
+    """3일 단위로 분할 호출 후 DataFrame으로 병합 (raw, dedup 전)."""
+    frames = []
+    cur = start
+    while cur <= end:
+        chunk_end = min(cur + timedelta(days=2), end)
+        try:
+            xml = fetch(cur, chunk_end, auth, wanted_no)
+            chunk_df = parse(xml)
+            frames.append(chunk_df)
+        except Exception:
+            pass
+        cur = chunk_end + timedelta(days=1)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def parse(xml_text):
@@ -250,22 +266,24 @@ if search_btn:
 
     with st.spinner("데이터 조회 중..."):
         try:
-            xml_text = fetch(start_date, end_date, auth_key, wanted_auth_no)
-        except requests.HTTPError as e:
-            st.error(f"API 오류: {e}")
-            st.stop()
+            raw_df = fetch_all(start_date, end_date, auth_key, wanted_auth_no)
         except Exception as e:
             st.error(f"오류 발생: {e}")
             st.stop()
 
-    try:
-        df = parse(xml_text)
-    except ET.ParseError as e:
-        st.error(f"XML 파싱 오류: {e}")
-        st.stop()
+    if raw_df.empty:
+        st.session_state["base_df"]       = raw_df
+        st.session_state["period"]        = (start_date, end_date)
+        st.session_state["pending_edits"] = {}
+        st.session_state["raw_df"]        = raw_df
+        st.session_state.pop("data_editor", None)
+        st.rerun()
+
+    # 일별 집계용 raw_df 별도 보관 (dedup 전)
+    st.session_state["raw_df"] = raw_df.copy()
 
     # 동일 공고번호는 최신 연계일시 기준 1건만 유지
-    df = df.sort_values("연계일시", ascending=False).drop_duplicates(subset=["공고번호"]).reset_index(drop=True)
+    df = raw_df.sort_values("연계일시", ascending=False).drop_duplicates(subset=["공고번호"]).reset_index(drop=True)
 
     if exclude_employment:
         df = df[~df["에러내용"].str.contains("고용형태", na=False)].reset_index(drop=True)
@@ -315,6 +333,21 @@ c2.metric("미검토",   f"{미검토_count:,}건")
 c3.metric("검토중",   f"{검토중_count:,}건")
 c4.metric("이상없음", f"{이상없음_count:,}건")
 c5.metric("게재중단", f"{게재중단_count:,}건")
+
+st.divider()
+
+# ── 일별 집계 ──────────────────────────────────
+if "raw_df" in st.session_state and not st.session_state["raw_df"].empty:
+    raw = st.session_state["raw_df"]
+    raw_date = raw["연계일시"].str[:8]
+    raw_date = raw_date.apply(lambda x: f"{x[:4]}-{x[4:6]}-{x[6:8]}" if len(x) >= 8 else "")
+    total_by_day = raw_date.value_counts().sort_index().rename("전체 건수")
+    excl_by_day  = raw_date[~raw["에러내용"].str.contains("고용형태", na=False)].value_counts().sort_index().rename("고용형태 에러 제외")
+    daily = pd.concat([total_by_day, excl_by_day], axis=1).fillna(0).astype(int)
+    daily.index.name = "날짜"
+    daily = daily.reset_index()
+    with st.expander("📅 일별 집계", expanded=True):
+        st.dataframe(daily, hide_index=True, use_container_width=True)
 
 st.divider()
 
