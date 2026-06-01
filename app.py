@@ -38,8 +38,15 @@ def _sb():
 
 @st.cache_data(ttl=5)
 def load_store() -> dict:
-    rows = _sb().table("memo_store").select("wanted_auth_no, status, memo").execute().data
-    return {r["wanted_auth_no"]: {"처리상태": r["status"], "메모": r["memo"]} for r in rows}
+    rows = _sb().table("memo_store").select("wanted_auth_no, status, memo, status_changed_at").execute().data
+    return {
+        r["wanted_auth_no"]: {
+            "처리상태": r["status"],
+            "메모": r["memo"],
+            "상태변경일": r.get("status_changed_at") or "",
+        }
+        for r in rows
+    }
 
 
 def save_store(store: dict):
@@ -48,7 +55,8 @@ def save_store(store: dict):
     if to_delete:
         sb.table("memo_store").delete().in_("wanted_auth_no", list(to_delete)).execute()
     if store:
-        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"]}
+        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"],
+                 "status_changed_at": v.get("상태변경일", "")}
                 for k, v in store.items()]
         sb.table("memo_store").upsert(rows).execute()
     load_store.clear()
@@ -67,12 +75,22 @@ def capture_edits():
         wanted = fd.iloc[row_idx]["공고번호"]
         if not wanted:
             continue
-        base_status = fd.iloc[row_idx]["처리상태"]
-        base_memo   = str(fd.iloc[row_idx]["메모"] or "")
+        base_status     = fd.iloc[row_idx]["처리상태"]
+        base_memo       = str(fd.iloc[row_idx]["메모"] or "")
+        base_changed_at = str(fd.iloc[row_idx].get("상태변경일", "") or "")
         new_status  = changes.get("처리상태", base_status)
         new_memo    = str(changes.get("메모", base_memo) or "")
+
+        prev = st.session_state["pending_edits"].get(wanted, {})
+        prev_status = prev.get("처리상태", base_status)
+        if new_status != prev_status:
+            # 상태가 실제로 바뀐 경우에만 날짜 갱신
+            new_changed_at = date.today().strftime("%Y-%m-%d") if new_status != "미검토" else ""
+        else:
+            new_changed_at = prev.get("상태변경일", base_changed_at)
+
         st.session_state["pending_edits"][wanted] = {
-            "처리상태": new_status, "메모": new_memo
+            "처리상태": new_status, "메모": new_memo, "상태변경일": new_changed_at
         }
 
 
@@ -156,6 +174,7 @@ def parse(xml_text):
     df = pd.DataFrame(rows, columns=[label for _, label in COLUMNS])
     df.insert(0, "처리상태", "미검토")
     df.insert(1, "메모", "")
+    df.insert(2, "상태변경일", "")
     return df
 
 
@@ -253,8 +272,9 @@ if search_btn:
     for idx in df.index:
         key = df.at[idx, "공고번호"]
         if key and key in stored:
-            df.at[idx, "처리상태"] = stored[key]["처리상태"]
-            df.at[idx, "메모"]     = stored[key]["메모"]
+            df.at[idx, "처리상태"]  = stored[key]["처리상태"]
+            df.at[idx, "메모"]      = stored[key]["메모"]
+            df.at[idx, "상태변경일"] = stored[key].get("상태변경일", "")
 
     st.session_state["base_df"]       = df
     st.session_state["period"]        = (start_date, end_date)
@@ -300,8 +320,9 @@ view_df = base_df.copy()
 for idx in view_df.index:
     k = view_df.at[idx, "공고번호"]
     if k and k in pending:
-        view_df.at[idx, "처리상태"] = pending[k]["처리상태"]
-        view_df.at[idx, "메모"]     = pending[k]["메모"]
+        view_df.at[idx, "처리상태"]  = pending[k]["처리상태"]
+        view_df.at[idx, "메모"]      = pending[k]["메모"]
+        view_df.at[idx, "상태변경일"] = pending[k].get("상태변경일", view_df.at[idx, "상태변경일"])
 
 law_map_count  = view_df["법령 맵핑 내용"].str.strip().ne("").sum()
 memo_count     = view_df["메모"].str.strip().ne("").sum()
@@ -352,11 +373,12 @@ edited = st.data_editor(
         "처리상태": st.column_config.SelectboxColumn(
             "처리상태", options=STATUS_OPTIONS, required=True, width="small",
         ),
+        "상태변경일":     st.column_config.TextColumn("상태변경일",     width="small"),
         "메모":           st.column_config.TextColumn("메모",           width="medium"),
         "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
         "법령 맵핑 내용": st.column_config.TextColumn("법령 맵핑 내용", width="large"),
     },
-    disabled=["색상"],
+    disabled=["색상", "상태변경일"],
     hide_index=True,
     use_container_width=True,
     height=450,
@@ -374,13 +396,15 @@ def build_final_store() -> dict:
         k = row["공고번호"]
         s = row["처리상태"]
         m = str(row["메모"] or "")
+        c = str(row.get("상태변경일", "") or "")
         if k and (s != "미검토" or m.strip()):
-            store[k] = {"처리상태": s, "메모": m}
+            store[k] = {"처리상태": s, "메모": m, "상태변경일": c}
     for k, v in pending.items():
         s = v["처리상태"]
         m = str(v.get("메모", "") or "")
+        c = str(v.get("상태변경일", "") or "")
         if s != "미검토" or m.strip():
-            store[k] = {"처리상태": s, "메모": m}
+            store[k] = {"처리상태": s, "메모": m, "상태변경일": c}
         elif k in store:
             del store[k]
     return store
