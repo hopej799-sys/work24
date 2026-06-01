@@ -302,19 +302,18 @@ if base_df.empty:
 
 # ── 요약 지표 (pending_edits 반영) ─────────────
 total     = len(base_df)
-이상없음_count = sum(
-    1 for _, r in base_df.iterrows()
-    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "이상없음"
-)
-게재중단_count = sum(
-    1 for _, r in base_df.iterrows()
-    if pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"]) == "게재중단"
-)
-미검토_count = total - 이상없음_count - 게재중단_count
-c1, c2, c3 = st.columns(3)
+def _eff_status(r):
+    return pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"])
+
+이상없음_count = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "이상없음")
+게재중단_count = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "게재중단")
+검토중_count   = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "검토중")
+미검토_count   = total - 이상없음_count - 게재중단_count - 검토중_count
+c1, c2, c3, c4 = st.columns(4)
 c1.metric("총 건수",  f"{total:,}건")
 c2.metric("미검토",   f"{미검토_count:,}건")
-c3.metric("처리완료", f"이상없음:{이상없음_count:,}건 / 게재중단:{게재중단_count:,}건")
+c3.metric("검토중",   f"{검토중_count:,}건")
+c4.metric("처리완료", f"이상없음:{이상없음_count:,}건 / 게재중단:{게재중단_count:,}건")
 
 st.divider()
 
