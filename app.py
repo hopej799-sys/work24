@@ -339,14 +339,25 @@ st.divider()
 # ── 일별 집계 ──────────────────────────────────
 if "raw_df" in st.session_state and not st.session_state["raw_df"].empty:
     raw = st.session_state["raw_df"]
-    raw_date = raw["연계일시"].str[:8]
-    raw_date = raw_date.apply(lambda x: f"{x[:4]}-{x[4:6]}-{x[6:8]}" if len(x) >= 8 else "")
-    total_by_day = raw_date.value_counts().sort_index().rename("전체 건수")
-    excl_by_day  = raw_date[~raw["에러내용"].str.contains("고용형태", na=False)].value_counts().sort_index().rename("고용형태 에러 제외")
-    daily = pd.concat([total_by_day, excl_by_day], axis=1).fillna(0).astype(int)
+    raw_date = raw["연계일시"].str[:10]   # "2026-05-28 00:30:00.0" → "2026-05-28"
+
+    total_by_day  = raw_date.value_counts().sort_index().rename("전체 건수(raw)")
+    excl_by_day   = raw_date[~raw["에러내용"].str.contains("고용형태", na=False)].value_counts().sort_index().rename("고용형태 에러 제외(raw)")
+    # 공고번호 dedup 기준 유니크 건수
+    raw["_date"] = raw_date
+    unique_by_day = (
+        raw.sort_values("연계일시", ascending=False)
+           .drop_duplicates(subset=["공고번호"])
+           .groupby("_date")["공고번호"].count()
+           .rename("유니크 건수")
+    )
+    raw.drop(columns=["_date"], inplace=True)
+
+    daily = pd.concat([total_by_day, excl_by_day, unique_by_day], axis=1).fillna(0).astype(int)
     daily.index.name = "날짜"
     daily = daily.reset_index()
     with st.expander("📅 일별 집계", expanded=True):
+        st.caption("전체 건수·고용형태 제외: 중복 포함 raw 건수 / 유니크 건수: 공고번호 기준 중복 제거")
         st.dataframe(daily, hide_index=True, use_container_width=True)
 
 st.divider()
