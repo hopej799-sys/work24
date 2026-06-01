@@ -49,9 +49,9 @@ def load_store() -> dict:
     }
 
 
-def save_store(store: dict):
+def save_store(store: dict, to_delete: set = None):
     sb = _sb()
-    to_delete = set(load_store().keys()) - set(store.keys())
+    # 명시적으로 미검토로 되돌린 것만 삭제 (전체 삭제 금지)
     if to_delete:
         sb.table("memo_store").delete().in_("wanted_auth_no", list(to_delete)).execute()
     if store:
@@ -393,8 +393,9 @@ st.divider()
 
 # ── 저장 여부 판단 ────────────────────────────
 # 저장할 최종 store: base_df 비-미검토 행 + pending_edits 합산
-def build_final_store() -> dict:
+def build_final_store():
     store = {}
+    to_delete = set()   # 명시적으로 미검토로 되돌린 공고번호만
     for _, row in base_df.iterrows():
         k = row["공고번호"]
         s = row["처리상태"]
@@ -408,12 +409,14 @@ def build_final_store() -> dict:
         c = str(v.get("상태변경일", "") or "")
         if s != "미검토" or m.strip():
             store[k] = {"처리상태": s, "메모": m, "상태변경일": c}
-        elif k in store:
-            del store[k]
-    return store
+        else:
+            if k in store:
+                del store[k]
+            to_delete.add(k)   # 이 공고번호만 DB에서 삭제
+    return store, to_delete
 
-current_store = build_final_store()
-has_changes   = current_store != load_store()
+current_store, to_delete_set = build_final_store()
+has_changes = bool(pending)   # pending 편집 내용이 있을 때만 True
 
 btn_col, dl_col = st.columns([1, 2])
 
@@ -421,7 +424,7 @@ with btn_col:
     save_label = "💾 저장" + (" ●" if has_changes else "")
     if st.button(save_label, type="primary", use_container_width=True, key="save_btn"):
         try:
-            save_store(current_store)
+            save_store(current_store, to_delete_set)
         except Exception as e:
             st.error(f"저장 실패: {e}")
             st.stop()
