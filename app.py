@@ -428,11 +428,13 @@ with btn_col:
         for idx in new_base.index:
             k = new_base.at[idx, "공고번호"]
             if k and k in current_store:
-                new_base.at[idx, "처리상태"] = current_store[k]["처리상태"]
-                new_base.at[idx, "메모"]     = current_store[k]["메모"]
+                new_base.at[idx, "처리상태"]  = current_store[k]["처리상태"]
+                new_base.at[idx, "메모"]      = current_store[k]["메모"]
+                new_base.at[idx, "상태변경일"] = current_store[k].get("상태변경일", "")
             elif k:
-                new_base.at[idx, "처리상태"] = "미검토"
-                new_base.at[idx, "메모"]     = ""
+                new_base.at[idx, "처리상태"]  = "미검토"
+                new_base.at[idx, "메모"]      = ""
+                new_base.at[idx, "상태변경일"] = ""
         st.session_state["base_df"]       = new_base
         st.session_state["pending_edits"] = {}   # pending 초기화 (위젯 키 아님 → 안전)
 
