@@ -335,7 +335,7 @@ law_volt_count = (view_df["법위반의심 여부"] == "Y").sum()
 with st.expander("🔧 결과 필터", expanded=True):
     f1, f2, f3 = st.columns([2, 2, 1])
     with f1:
-        status_filter = st.selectbox("처리 상태", ["전체", "미검토", "이상없음", "게재중단"])
+        status_filter = st.selectbox("처리 상태", ["전체", "미검토", "검토중", "이상없음", "게재중단"])
     with f2:
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링", "구인 모니터링"])
     with f3:
