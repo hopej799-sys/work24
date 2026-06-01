@@ -121,6 +121,7 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**관리**")
+    st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
     if st.button("🗑️ 메모 전체 초기화", use_container_width=True):
         _sb().table("memo_store").update({"memo": ""}).neq("wanted_auth_no", "").execute()
         load_store.clear()

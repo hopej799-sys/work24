@@ -58,6 +58,7 @@ def build_daily(raw):
 
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
+    st.page_link("pages/monitoring.py", label="← 모니터링", use_container_width=True)
     st.title("📊 월별 현황")
     auth_key = st.text_input("인증키 *", type="password", placeholder="발급받은 인증키 입력")
     col1, col2 = st.columns(2)
