@@ -265,21 +265,6 @@ def make_excel(df, start, end):
 st.title("📋 연계채용정보 모니터링 결과조회")
 st.caption("한국고용정보원 Work24 Open API")
 
-if "_debug_xml" in st.session_state:
-    with st.expander("🔧 XML 디버그 (wantedInfoUrl 확인)", expanded=True):
-        try:
-            _root = ET.fromstring(st.session_state["_debug_xml"])
-            _item = next(_root.iter("monitoringErrInfo"), None)
-            if _item is not None:
-                tags = {child.tag: child.text for child in _item}
-                st.write("**wantedInfoUrl 존재:**", "wantedInfoUrl" in tags)
-                st.write("**wantedInfoUrl 값:**", tags.get("wantedInfoUrl"))
-                st.write("**전체 태그 목록:**")
-                st.code("\n".join(f"{k} = {v}" for k, v in tags.items()))
-            else:
-                st.warning("monitoringErrInfo 항목 없음")
-        except Exception as e:
-            st.error(f"파싱 오류: {e}")
 
 
 if search_btn:
@@ -288,8 +273,6 @@ if search_btn:
 
     with st.spinner("데이터 조회 중..."):
         try:
-            _first_xml = fetch(start_date, min(start_date + timedelta(days=2), end_date), auth_key, wanted_auth_no)
-            st.session_state["_debug_xml"] = _first_xml
             raw_df = fetch_all(start_date, end_date, auth_key, wanted_auth_no)
         except Exception as e:
             st.error(f"오류 발생: {e}")
