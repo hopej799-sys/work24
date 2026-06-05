@@ -1,0 +1,75 @@
+/* ── 전체 폰트 / 배경 ───────────────────────────── */
+[data-testid="stAppViewContainer"] {
+    font-family: "맑은 고딕", "Malgun Gothic", sans-serif;
+}
+
+/* ── 사이드바 ───────────────────────────────────── */
+[data-testid="stSidebar"] {
+    background-color: #f5f7fa;
+}
+
+[data-testid="stSidebar"] .stButton > button {
+    background-color: #1F5C8B;
+    color: white;
+    border: none;
+    border-radius: 6px;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+    background-color: #174a72;
+}
+
+/* ── 메인 타이틀 ─────────────────────────────────── */
+h1 {
+    color: #1F5C8B;
+    font-size: 1.6rem !important;
+}
+
+/* ── 요약 지표 카드 ───────────────────────────────── */
+[data-testid="stMetric"] {
+    background-color: #f0f4f9;
+    border-radius: 10px;
+    padding: 14px 18px;
+    border-left: 4px solid #1F5C8B;
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 0.82rem !important;
+    color: #555;
+}
+
+[data-testid="stMetricValue"] {
+    font-size: 1.5rem !important;
+    color: #1F5C8B;
+    font-weight: 700;
+}
+
+/* ── 저장 버튼 ───────────────────────────────────── */
+[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"] {
+    background-color: #1F5C8B;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"]:hover {
+    background-color: #174a72;
+}
+
+/* ── 데이터 테이블 헤더 ───────────────────────────── */
+[data-testid="stDataEditor"] thead tr th {
+    background-color: #1F5C8B !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+/* ── expander (결과 필터) ─────────────────────────── */
+[data-testid="stExpander"] {
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+}
+
+/* ── 캡션 / 구분선 ───────────────────────────────── */
+[data-testid="stCaptionContainer"] {
+    color: #888;
+    font-size: 0.78rem;
+}

@@ -26,6 +26,7 @@ COLUMNS = [
     ("errCont",       "에러내용"),
     ("lawVoltDobtYn", "법위반의심 여부"),
     ("lawMappCont",   "법령 맵핑 내용"),
+    ("wantedInfoUrl", "구인공고 URL"),
 ]
 
 STATUS_OPTIONS = ["미검토", "검토중", "이상없음", "게재중단"]
@@ -226,7 +227,7 @@ def make_excel(df, start, end):
         c.alignment = center_align; c.border = border
     ws.row_dimensions[2].height = 22
 
-    long_cols = {"에러내용", "법령 맵핑 내용"}
+    long_cols = {"에러내용", "법령 맵핑 내용", "구인공고 URL"}
     for ri, (_, row) in enumerate(df.iterrows(), 3):
         status = row["처리상태"]
         if status == "이상없음":
@@ -246,7 +247,7 @@ def make_excel(df, start, end):
                 c.fill = row_fill
         ws.row_dimensions[ri].height = 18
 
-    col_widths = [12, 30, 18, 20, 20, 20, 20, 50, 16, 40]
+    col_widths = [12, 30, 18, 20, 20, 20, 20, 20, 50, 16, 40, 40]
     for i, w in enumerate(col_widths[:ncols], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A3"
@@ -261,6 +262,22 @@ def make_excel(df, start, end):
 st.title("📋 연계채용정보 모니터링 결과조회")
 st.caption("한국고용정보원 Work24 Open API")
 
+if "_debug_xml" in st.session_state:
+    with st.expander("🔧 XML 디버그 (wantedInfoUrl 확인)", expanded=True):
+        try:
+            _root = ET.fromstring(st.session_state["_debug_xml"])
+            _item = next(_root.iter("monitoringErrInfo"), None)
+            if _item is not None:
+                tags = {child.tag: child.text for child in _item}
+                st.write("**wantedInfoUrl 존재:**", "wantedInfoUrl" in tags)
+                st.write("**wantedInfoUrl 값:**", tags.get("wantedInfoUrl"))
+                st.write("**전체 태그 목록:**")
+                st.code("\n".join(f"{k} = {v}" for k, v in tags.items()))
+            else:
+                st.warning("monitoringErrInfo 항목 없음")
+        except Exception as e:
+            st.error(f"파싱 오류: {e}")
+
 
 if search_btn:
     if not validate():
@@ -268,6 +285,8 @@ if search_btn:
 
     with st.spinner("데이터 조회 중..."):
         try:
+            _first_xml = fetch(start_date, min(start_date + timedelta(days=2), end_date), auth_key, wanted_auth_no)
+            st.session_state["_debug_xml"] = _first_xml
             raw_df = fetch_all(start_date, end_date, auth_key, wanted_auth_no)
         except Exception as e:
             st.error(f"오류 발생: {e}")
@@ -400,8 +419,9 @@ edited = st.data_editor(
         "메모":           st.column_config.TextColumn("메모",           width="medium"),
         "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
         "법령 맵핑 내용": st.column_config.TextColumn("법령 맵핑 내용", width="large"),
+        "구인공고 URL":   st.column_config.LinkColumn("구인공고 URL",   width="medium"),
     },
-    disabled=["색상", "상태변경일"],
+    disabled=["색상", "상태변경일", "구인공고 URL"],
     hide_index=True,
     use_container_width=True,
     height=450,
@@ -479,3 +499,4 @@ with dl_col:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
     )
+
