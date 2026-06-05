@@ -187,7 +187,10 @@ def parse(xml_text):
         row = {}
         for key, label in COLUMNS:
             node = item.find(key)
-            row[label] = node.text.strip() if node is not None and node.text else ""
+            val = node.text.strip() if node is not None and node.text else ""
+            if key == "wantedInfoUrl" and val:
+                val = val.split("?")[0]
+            row[label] = val
         rows.append(row)
     df = pd.DataFrame(rows, columns=[label for _, label in COLUMNS])
     df.insert(0, "처리상태", "미검토")
