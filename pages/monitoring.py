@@ -19,7 +19,6 @@ API_URL = "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo220L01.
 
 COLUMNS = [
     ("sysGbnNm",      "오류구분"),
-    ("iorgGbnm",      "연계기관명"),
     ("wantedAuthNo",  "공고번호"),
     ("createDtm",     "모니터링일시"),
     ("ifDtm",         "연계일시"),
@@ -123,16 +122,6 @@ with st.sidebar:
     st.divider()
     st.markdown("**관리**")
     st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
-    if st.button("🗑️ 메모 전체 초기화", use_container_width=True):
-        _sb().table("memo_store").update({"memo": ""}).neq("wanted_auth_no", "").execute()
-        load_store.clear()
-        if "base_df" in st.session_state:
-            st.session_state["base_df"]["메모"] = ""
-        if "pending_edits" in st.session_state:
-            for k in st.session_state["pending_edits"]:
-                st.session_state["pending_edits"][k]["메모"] = ""
-        st.toast("메모 초기화 완료", icon="🗑️")
-        st.rerun()
 
 
 def validate():
