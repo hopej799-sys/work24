@@ -405,7 +405,7 @@ edited = st.data_editor(
         "메모":           st.column_config.TextColumn("메모",           width="medium"),
         "에러내용":       st.column_config.TextColumn("에러내용",       width="large"),
         "법령 맵핑 내용": st.column_config.TextColumn("법령 맵핑 내용", width="large"),
-        "구인공고 URL":   st.column_config.TextColumn("구인공고 URL",   width="large"),
+        "구인공고 URL":   st.column_config.LinkColumn("구인공고 URL",   width="large", display_text="🔗 바로가기"),
     },
     disabled=["색상", "상태변경일", "구인공고 URL"],
     hide_index=True,
