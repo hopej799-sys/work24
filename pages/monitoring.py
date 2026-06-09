@@ -28,7 +28,7 @@ COLUMNS = [
     ("wantedInfoUrl", "구인공고 URL"),
 ]
 
-STATUS_OPTIONS = ["미검토", "검토중", "이상없음", "게재중단"]
+STATUS_OPTIONS = ["미검토", "검토중", "검토완료", "이상없음", "게재중단"]
 
 
 @st.cache_resource
@@ -203,6 +203,7 @@ def make_excel(df, start, end):
     alt_fill     = PatternFill("solid", start_color="EAF2FB")
     green_fill   = PatternFill("solid", start_color="D9F2D9")
     yellow_fill  = PatternFill("solid", start_color="FFF9CC")
+    blue_fill    = PatternFill("solid", start_color="D6E8FB")
     red_fill     = PatternFill("solid", start_color="FFD9D9")
 
     ncols = len(df.columns)
@@ -228,6 +229,8 @@ def make_excel(df, start, end):
             row_fill = red_fill
         elif status == "검토중":
             row_fill = yellow_fill
+        elif status == "검토완료":
+            row_fill = blue_fill
         else:
             row_fill = alt_fill if ri % 2 == 1 else None
         for ci, col in enumerate(df.columns, 1):
@@ -314,7 +317,9 @@ if base_df.empty:
     st.info("조회된 데이터가 없습니다.")
     st.stop()
 
-# ── 요약 지표 (pending_edits 반영) ─────────────
+# ── 요약 지표 + 대시보드 (pending_edits 반영) ──
+import plotly.graph_objects as go
+
 total     = len(base_df)
 def _eff_status(r):
     return pending.get(r["공고번호"], {}).get("처리상태", r["처리상태"])
@@ -322,13 +327,36 @@ def _eff_status(r):
 이상없음_count = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "이상없음")
 게재중단_count = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "게재중단")
 검토중_count   = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "검토중")
-미검토_count   = total - 이상없음_count - 게재중단_count - 검토중_count
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("총 건수",  f"{total:,}건")
-c2.metric("미검토",   f"{미검토_count:,}건")
-c3.metric("검토중",   f"{검토중_count:,}건")
-c4.metric("이상없음", f"{이상없음_count:,}건")
-c5.metric("게재중단", f"{게재중단_count:,}건")
+검토완료_count = sum(1 for _, r in base_df.iterrows() if _eff_status(r) == "검토완료")
+미검토_count   = total - 이상없음_count - 게재중단_count - 검토중_count - 검토완료_count
+
+left, right = st.columns([3, 2])
+with left:
+    r1c1, r1c2, r1c3 = st.columns(3)
+    r1c1.metric("총 건수",   f"{total:,}건")
+    r1c2.metric("미검토",    f"{미검토_count:,}건")
+    r1c3.metric("검토중",    f"{검토중_count:,}건")
+    r2c1, r2c2, r2c3 = st.columns(3)
+    r2c1.metric("검토완료",  f"{검토완료_count:,}건")
+    r2c2.metric("이상없음",  f"{이상없음_count:,}건")
+    r2c3.metric("게재중단",  f"{게재중단_count:,}건")
+
+with right:
+    labels = ["미검토", "검토중", "검토완료", "이상없음", "게재중단"]
+    values = [미검토_count, 검토중_count, 검토완료_count, 이상없음_count, 게재중단_count]
+    colors = ["#CCCCCC", "#FFD700", "#4096EE", "#5CB85C", "#D9534F"]
+    fig = go.Figure(go.Pie(
+        labels=labels, values=values, hole=0.55,
+        marker_colors=colors,
+        textinfo="percent", textfont_size=12,
+        hovertemplate="%{label}: %{value}건 (%{percent})<extra></extra>",
+    ))
+    fig.update_layout(
+        margin=dict(t=10, b=10, l=10, r=10), height=200,
+        showlegend=True,
+        legend=dict(orientation="v", x=1.05, y=0.5, font_size=11),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 
@@ -349,7 +377,7 @@ law_volt_count = (view_df["법위반의심 여부"] == "Y").sum()
 with st.expander("🔧 결과 필터", expanded=True):
     f1, f2, f3 = st.columns([2, 2, 1])
     with f1:
-        status_filter = st.selectbox("처리 상태", ["전체", "미검토", "검토중", "이상없음", "게재중단"])
+        status_filter = st.selectbox("처리 상태", ["전체", "미검토", "검토중", "검토완료", "이상없음", "게재중단"])
     with f2:
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링", "구인 모니터링"])
     with f3:
@@ -376,7 +404,7 @@ filtered_display = filtered.reset_index(drop=True)
 st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
 
 # 처리상태별 색상 지시자 컬럼 (read-only)
-_EMOJI = {"이상없음": "🟢", "게재중단": "🔴", "검토중": "🟡", "미검토": "⬜"}
+_EMOJI = {"이상없음": "🟢", "게재중단": "🔴", "검토중": "🟡", "검토완료": "🔵", "미검토": "⬜"}
 display_with_color = filtered_display.copy()
 display_with_color.insert(0, "색상", display_with_color["처리상태"].map(_EMOJI).fillna("⬜"))
 
