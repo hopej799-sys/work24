@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>고용24 모니터링 결과 조회 — CS 사용 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface-2: #f2f1ed;
+    --text-primary: #1a1917;
+    --text-secondary: #6b6860;
+    --text-muted: #9e9b95;
+    --border: #e4e2dc;
+    --accent: #185FA5;
+    --accent-light: #E6F1FB;
+    --accent-mid: #B5D4F4;
+    --success: #3B6D11;
+    --success-light: #EAF3DE;
+    --success-mid: #C0DD97;
+    --danger: #A32D2D;
+    --danger-light: #FCEBEB;
+    --danger-mid: #F7C1C1;
+    --amber: #854F0B;
+    --amber-light: #FAEEDA;
+    --amber-mid: #FAC775;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--text-primary);
+    color: #fff;
+    padding: 48px 0 40px;
+    text-align: center;
+  }
+  .header .label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 12px;
+  }
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .header .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; }
+
+  /* FLOW BAR */
+  .flow-bar {
+    background: var(--accent);
+    padding: 14px 24px;
+    text-align: center;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .flow-bar span { display: inline-block; color: #fff; font-size: 13px; font-weight: 500; padding: 0 3px; }
+  .flow-bar .arrow { color: rgba(255,255,255,0.4); margin: 0 1px; }
+
+
+
+  /* CONTAINER */
+  .container { max-width: 800px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* SECTION */
+  .section { margin-top: 48px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--text-primary);
+  }
+  .step-badge {
+    background: var(--text-primary);
+    color: #fff;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  /* URL BOX */
+  .url-box {
+    background: var(--accent-light);
+    border: 1px solid var(--accent-mid);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .url-box a {
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    word-break: break-all;
+    text-decoration: none;
+  }
+  .url-box a:hover { text-decoration: underline; }
+
+  /* CALLOUT */
+  .callout {
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 13.5px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 10px;
+  }
+  .callout.warn { background: var(--amber-light); border: 1px solid var(--amber-mid); color: var(--amber); }
+  .callout.info { background: var(--accent-light); border: 1px solid var(--accent-mid); color: var(--accent); }
+  .callout.success { background: var(--success-light); border: 1px solid var(--success-mid); color: var(--success); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* TABLE */
+  .tbl-wrap { border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); }
+  .gen-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .gen-table th {
+    background: var(--surface-2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .gen-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  .gen-table tr:last-child td { border-bottom: none; }
+  .gen-table .key { font-weight: 600; white-space: nowrap; }
+  .gen-table .red { color: var(--danger); font-weight: 700; }
+  .gen-table .muted { color: var(--text-muted); font-size: 12px; }
+
+  /* ORDERED LIST */
+  .o-list { list-style: none; counter-reset: ol; }
+  .o-list li {
+    counter-increment: ol;
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .o-list li:last-child { border-bottom: none; }
+  .o-list li::before {
+    content: counter(ol);
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .o-list .sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* STATUS GRID */
+  .status-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .s-card {
+    border-radius: var(--radius-md);
+    padding: 14px;
+    border: 1px solid;
+  }
+  .s-card.s-gray { background: var(--surface-2); border-color: var(--border); }
+  .s-card.s-amber { background: var(--amber-light); border-color: var(--amber-mid); }
+  .s-card.s-green { background: var(--success-light); border-color: var(--success-mid); }
+  .s-card.s-red { background: var(--danger-light); border-color: var(--danger-mid); }
+  .s-card.s-blue { background: var(--accent-light); border-color: var(--accent-mid); }
+  .s-card .s-dot {
+    width: 9px; height: 9px; border-radius: 50%; margin-bottom: 9px;
+  }
+  .s-gray .s-dot { background: var(--text-muted); }
+  .s-amber .s-dot { background: var(--amber); }
+  .s-green .s-dot { background: var(--success); }
+  .s-red .s-dot { background: var(--danger); }
+  .s-blue .s-dot { background: var(--accent); }
+  .s-card .s-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .s-gray .s-name { color: var(--text-primary); }
+  .s-amber .s-name { color: var(--amber); }
+  .s-green .s-name { color: var(--success); }
+  .s-red .s-name { color: var(--danger); }
+  .s-blue .s-name { color: var(--accent); }
+  .s-card .s-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin-bottom: 6px; }
+  .s-card .s-when { font-size: 11px; color: var(--text-muted); padding-top: 7px; border-top: 1px solid rgba(0,0,0,0.07); }
+
+  /* INPUT STEPS */
+  .i-steps { list-style: none; }
+  .i-steps li {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .i-steps li:last-child { border-bottom: none; }
+  .i-steps .num {
+    min-width: 22px; height: 22px; border-radius: 4px;
+    background: var(--text-primary); color: #fff;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* BRANCH GRID */
+  .branch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+  .b-card { border-radius: var(--radius-md); padding: 14px; border: 1px solid; font-size: 13px; }
+  .b-card.b-blue { background: var(--accent-light); border-color: var(--accent-mid); }
+  .b-card.b-amber { background: var(--amber-light); border-color: var(--amber-mid); }
+  .b-card.b-green { background: var(--success-light); border-color: var(--success-mid); }
+  .b-card .b-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 7px; }
+  .b-blue .b-tag { color: var(--accent); }
+  .b-amber .b-tag { color: var(--amber); }
+  .b-green .b-tag { color: var(--success); }
+  .b-card p { color: var(--text-secondary); line-height: 1.5; }
+
+  /* EXAMPLE CARD */
+  .ex-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .ex-card-head {
+    background: var(--surface-2);
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ex-card-head .badge {
+    font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em;
+  }
+  .ex-card-head .num { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .ex-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .ex-row-label {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    letter-spacing: 0.05em; margin-bottom: 4px; text-transform: uppercase;
+  }
+  .ex-row-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ex-status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 100px;
+    font-size: 13px; font-weight: 700;
+    background: var(--success-light); color: var(--success);
+    border: 1px solid var(--success-mid);
+  }
+
+  /* FILTER TAGS */
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .f-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 100px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-primary);
+  }
+  .f-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* DAILY LIST */
+  .d-list { counter-reset: dl; list-style: none; }
+  .d-list li {
+    counter-increment: dl;
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+  }
+  .d-list li:last-child { border-bottom: none; }
+  .d-list li::before {
+    content: counter(dl);
+    min-width: 22px; height: 22px; border-radius: 4px;
+    background: var(--accent-light); color: var(--accent);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 3px;
+  }
+
+  /* EXCEL COLOR ROWS */
+  .xl-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .xl-row:last-child { border-bottom: none; }
+  .swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); flex-shrink: 0; }
+
+  /* FAQ */
+  .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-weight: 700; font-size: 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  .q-mark {
+    min-width: 22px; height: 22px; border-radius: 4px;
+    background: var(--text-primary); color: #fff;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .faq-a { font-size: 13.5px; color: var(--text-secondary); padding-left: 32px; line-height: 1.65; }
+
+  /* CONTACT */
+  .contact-box {
+    background: var(--text-primary); color: #fff;
+    border-radius: var(--radius-lg); padding: 24px;
+    margin-top: 48px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  }
+  .contact-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .contact-box p { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .contact-chip {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-md);
+    padding: 10px 18px; font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .branch-grid { grid-template-columns: 1fr; }
+    .ex-row-cols { grid-template-columns: 1fr; }
+    .contact-box { flex-direction: column; }
+  }
+  @media (max-width: 420px) {
+    .status-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="label">JobKorea CS Team · 운영 도구 안내</div>
+  <h1>고용24 모니터링 결과 조회</h1>
+  <div class="subtitle">CS 사용 가이드 (PoC)</div>
+</div>
+
+
+
+
+
+<div class="container">
+
+  <!-- 0. 배경 -->
+  <div class="section" id="s-bg">
+    <div class="section-header">
+      <h2>모니터링 피드백 구축 배경</h2>
+    </div>
+    <div class="card">
+      <p style="font-size:14px; color:var(--text-secondary); line-height:1.8;">
+        2025년 캄보디아 해외취업 사기 사건 이후 거짓 구인광고에 대한 사회적 경각심이 높아지면서,
+        <strong style="color:var(--text-primary);">고용24(한국고용정보원)</strong>가 민간 취업포털을 대상으로
+        구인공고 모니터링 피드백 API를 제공하기 시작했습니다.
+      </p>
+      <div style="margin-top:14px; background:var(--accent-light); border:1px solid var(--accent-mid); border-radius:var(--radius-md); padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:var(--accent); text-transform:uppercase; margin-bottom:8px;">목적</div>
+        <p style="font-size:13.5px; color:#185FA5; line-height:1.75; margin:0;">
+          고용24는 잡코리아에서 연동된 공고를 모니터링한 후, 자체 기준에 따라 게재 불가 사유를 피드백으로 안내하고 있으며,
+          이 피드백을 참고하여 잡코리아 내부 정책 기준으로 해당 공고를 재검토하고 처리 여부를 판단하는 것이 이 업무의 목적입니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 0. 업무 흐름 -->
+  <div class="section" id="s0">
+    <div class="section-header">
+      <h2>업무 흐름</h2>
+    </div>
+    <div class="card" style="padding: 28px 24px;">
+      <svg width="100%" viewBox="0 0 680 520" style="display:block;">
+        <defs>
+          <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#9e9b95" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+        <!-- Step 1 -->
+        <rect x="240" y="20" width="200" height="56" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
+        <text x="340" y="43" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#0C447C">① 접속</text>
+        <text x="340" y="62" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#185FA5">work24 앱 URL 열기</text>
+        <line x1="340" y1="76" x2="340" y2="108" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <!-- Step 2 -->
+        <rect x="240" y="108" width="200" height="56" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
+        <text x="340" y="131" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#0C447C">② 인증키 입력</text>
+        <text x="340" y="150" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#185FA5">사이드바에서 인증키 입력</text>
+        <line x1="340" y1="164" x2="340" y2="196" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <!-- Step 3 -->
+        <rect x="240" y="196" width="200" height="56" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
+        <text x="340" y="219" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#0C447C">③ 기간 설정 후 조회</text>
+        <text x="340" y="238" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#185FA5">최대 3일 · 전날~오늘 권장</text>
+        <line x1="340" y1="252" x2="340" y2="284" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <!-- Step 4 -->
+        <rect x="240" y="284" width="200" height="56" rx="8" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="1"/>
+        <text x="340" y="307" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#3C3489">④ 공고 확인</text>
+        <text x="340" y="326" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#534AB7">에러 내용 · 법위반의심 여부 확인</text>
+        <line x1="340" y1="340" x2="340" y2="372" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <!-- Step 5 -->
+        <rect x="190" y="372" width="300" height="56" rx="8" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="1"/>
+        <text x="340" y="395" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#3C3489">⑤ 처리상태 입력</text>
+        <text x="340" y="414" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" fill="#534AB7">미검토 · 검토중 · 검토완료 · 이상없음 · 게재중단</text>
+        <!-- 왼쪽 분기: 게재중단 -->
+        <line x1="190" y1="400" x2="150" y2="400" stroke="#9e9b95" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#flow-arrow)"/>
+        <rect x="22" y="370" width="128" height="60" rx="8" fill="#FCEBEB" stroke="#F7C1C1" stroke-width="1"/>
+        <text x="86" y="393" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="13" font-weight="600" fill="#791F1F">게재중단</text>
+        <text x="86" y="411" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" fill="#A32D2D">잡코리아 어드민</text>
+        <text x="86" y="424" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" fill="#A32D2D">에서 직접 처리</text>
+        <!-- 오른쪽 분기: 정책 이슈 -->
+        <line x1="490" y1="400" x2="530" y2="400" stroke="#9e9b95" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#flow-arrow)"/>
+        <rect x="530" y="370" width="128" height="60" rx="8" fill="#FAEEDA" stroke="#FAC775" stroke-width="1"/>
+        <text x="594" y="393" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="13" font-weight="600" fill="#633806">정책 이슈</text>
+        <text x="594" y="411" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" fill="#854F0B">메모 후 도메인</text>
+        <text x="594" y="424" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="11" fill="#854F0B">담당자 메일 전달</text>
+        <line x1="340" y1="428" x2="340" y2="460" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <!-- Step 6 -->
+        <rect x="240" y="460" width="200" height="44" rx="8" fill="#EAF3DE" stroke="#C0DD97" stroke-width="1"/>
+        <text x="340" y="486" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#27500A">⑥ 저장</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 노출 조건 -->
+  <div class="section" id="s-expose">
+    <div class="section-header">
+      <span class="step-badge" style="background:var(--surface-2); color:var(--text-primary); border:1px solid var(--border);">참고</span>
+      <h2>워크넷 내 잡코리아 채용공고 노출 조건</h2>
+    </div>
+    <div class="card">
+      <div class="card-title">노출 기본 조건 (AND)</div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+        <div style="background:var(--accent-light); border:1px solid var(--accent-mid); border-radius:var(--radius-md); padding:12px 16px; font-size:13.5px; color:var(--accent); font-weight:600;">
+          경력직<br><span style="font-weight:400; font-size:12px; color:var(--text-secondary);">경력 or 경력년수 입력 공고<br>(경력무관 포함 / 신입·경력인 포함)</span>
+        </div>
+        <div style="display:flex; align-items:center; color:var(--text-muted); font-size:20px; font-weight:300;">+</div>
+        <div style="background:var(--accent-light); border:1px solid var(--accent-mid); border-radius:var(--radius-md); padding:12px 16px; font-size:13.5px; color:var(--accent); font-weight:600;">
+          유료서비스 이용<br><span style="font-weight:400; font-size:12px; color:var(--text-secondary);">이용내역이 있는 공고</span>
+        </div>
+        <div style="display:flex; align-items:center; color:var(--text-muted); font-size:20px; font-weight:300;">+</div>
+        <div style="background:var(--accent-light); border:1px solid var(--accent-mid); border-radius:var(--radius-md); padding:12px 16px; font-size:13.5px; color:var(--accent); font-weight:600;">
+          즉시지원 공고<br><span style="font-weight:400; font-size:12px; color:var(--text-secondary);">조건 제거됨</span>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:4px;">
+        <div class="card-title">워크넷 자체 필터링 케이스 (비노출 처리)</div>
+        <div class="callout warn" style="margin-bottom:14px;">
+          ⚠️ 상위 조건에 부합하더라도 워크넷 자체 필터링 시스템에 의해 비노출 될 수 있습니다.
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; font-size:13px;">
+          <div style="padding:9px 14px; background:var(--surface-2); font-weight:700; font-size:11px; color:var(--text-secondary); letter-spacing:0.05em; border-bottom:1px solid var(--border);">필터링 기준</div>
+          <div style="padding:9px 14px; background:var(--surface-2); font-weight:700; font-size:11px; color:var(--text-secondary); letter-spacing:0.05em; border-bottom:1px solid var(--border); border-left:1px solid var(--border);">필터링 기준 (계속)</div>
+          <div style="padding:10px 14px; border-bottom:1px solid var(--border); line-height:2;">
+            <div>1) 동일 사업장 공고 20개 이상</div>
+            <div>2) 게재시작일이 현재일보다 2개월 이전</div>
+            <div>3) 고용형태가 null</div>
+            <div>4) 제목·상세요강에 특정 키워드 포함<br><span style="color:var(--text-muted); font-size:12px; line-height:1.5; display:block; margin-left:12px;">단란주점, 도우미, 선입금, 성인PC방, 위촉직, 이미지카페, 전화방, 프리랜서, 수강생, 안마, 추천인, 토킹바, 애인대행, 지입, 지입차</span></div>
+            <div>5) 마감일이 현재일자보다 이전</div>
+            <div>6) 중복공고</div>
+            <div>7) 학력코드 null</div>
+            <div>8) 임금 과다 (최소·최대·월평균 1억원 이상)</div>
+            <div>9) 동일 기업의 유사 공고가 워크넷에 존재</div>
+            <div>10) 파견직이면서 파견 금지 직종</div>
+          </div>
+          <div style="padding:10px 14px; border-bottom:1px solid var(--border); border-left:1px solid var(--border); line-height:2;">
+            <div>11) 우대자격증코드가 표준코드가 아닌 경우</div>
+            <div>12) 모집인원 null</div>
+            <div>13) 고용형태가 일용직</div>
+            <div>14) 수신제한대상 기업</div>
+            <div>15) 근무지 지역코드가 표준코드가 아닌 경우</div>
+            <div>16) 공고제목 130자 초과</div>
+            <div>17) 최저임금제 미만</div>
+            <div>18) 급여가 주급</div>
+            <div>19) 근무지주소 null</div>
+            <div>20) 사업자등록번호 체계 불일치</div>
+            <div>21) 접수마감일이 현재일 기준 6개월 이상</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 접속하기 -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <span class="step-badge">STEP 1</span>
+      <h2>접속하기</h2>
+    </div>
+    <div class="card">
+      <div class="url-box">
+        <span>🌐</span>
+        <a href="https://work24-pyw88x4mc8x73dzdh36smj.streamlit.app" target="_blank">
+          https://work24-pyw88x4mc8x73dzdh36smj.streamlit.app
+        </a>
+      </div>
+      <p style="font-size:13.5px; color:var(--text-secondary);">별도 회원가입·로그인 없음 — <strong>인증키만 입력</strong>하면 바로 사용 가능합니다. (인증키 별도 공유)</p>
+      <div class="callout warn" style="margin-top:12px;">
+        ⚠️ 현재는 브라우저를 새로 열 때마다 인증키를 입력해야 합니다. 추후 자동 적용 예정.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 화면 구성 -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <span class="step-badge">STEP 2</span>
+      <h2>화면 구성 파악</h2>
+    </div>
+    <div class="card">
+      <div class="code-block">┌─────────────────┬──────────────────────────────────────────┐
+│                 │  📊 상단 지표                             │
+│  🔍 사이드바    │  총 건수 | 미검토 | 처리완료             │
+│                 ├──────────────────────────────────────────┤
+│  • 인증키       │  🔧 결과 필터                            │
+│  • 조회 기간    │  처리상태 | 오류구분 | 법위반의심 등      │
+│  • 공고번호     ├──────────────────────────────────────────┤
+│  • 조회 필터    │  📋 데이터 테이블                        │
+│                 │  공고 목록 — 처리상태·메모 직접 편집      │
+│  🔎 조회 버튼   ├──────────────────────────────────────────┤
+│  🗑️ 메모 초기화 │  💾 저장    📥 엑셀 다운로드             │
+└─────────────────┴──────────────────────────────────────────┘</div>
+    </div>
+  </div>
+
+  <!-- 3. 조회하기 -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <span class="step-badge">STEP 3</span>
+      <h2>조회하기</h2>
+    </div>
+    <div class="card">
+      <ol class="o-list">
+        <li>
+          <div>
+            <strong>사이드바에서 인증키 입력</strong>
+            <div class="sub">인증키는 별도 공유드립니다.</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>조회 기간 설정</strong> — 시작일 ~ 종료일 <span style="color:var(--text-muted); font-size:12px;">(최대 3일)</span>
+            <div class="sub">📅 매일 확인 루틴: 전날 ~ 오늘 (2일) 권장</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>공고번호 입력</strong> <span style="color:var(--text-muted); font-size:12px;">(선택)</span>
+            <div class="sub">특정 공고만 확인할 때 사용</div>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>고용형태 에러 제외</strong> 체크 <span style="color:var(--text-muted); font-size:12px;">(선택)</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>🔎 조회 버튼 클릭</strong>
+          </div>
+        </li>
+      </ol>
+      <div class="callout info" style="margin-top:14px;">
+        💡 데이터가 조회되지 않으면? 해당 기간에 고용24 피드백이 없는 것입니다. 기간을 변경해서 다시 조회하세요.
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 피드백 내용 -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <span class="step-badge">STEP 4</span>
+      <h2>피드백 내용 이해하기</h2>
+    </div>
+    <div class="tbl-wrap">
+      <table class="gen-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">컬럼</th>
+            <th style="width:180px;">의미</th>
+            <th>확인 포인트</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="key">오류구분</td>
+            <td>사전필터링 / 구인 모니터링</td>
+            <td style="line-height:1.7;">
+              <strong>구인 모니터링</strong>: 전담 인력 13명이 45개 항목 직접 점검<br>
+              <span style="color:var(--accent); font-weight:600;">→ 우선 확인 필요</span>
+              <div style="margin-top:10px;">
+                <strong>사전 필터링</strong>: 시스템 자동 감지<br>
+                <span style="color:var(--accent);">→ 불량 공고 아니나 시스템 한계로 게재 불가 처리되는 케이스도 있어 고용24에 개선 요청 할 예정</span>
+              </div>
+              <div style="margin-top:8px; font-size:13px; color:var(--text-secondary);">
+                case1) 수신제한 키워드가 포함된 경우 시스템 한계로 필터되는 케이스 있음<br>
+                <span style="margin-left:16px; color:var(--text-muted);">(수신제한 키워드: 이모, 태국, 아르바이트, 아웃소싱 등)</span><br>
+                <span style="margin-left:8px;">예) 공고제목: [연 4000] 명동 오테나의원 일본/영어/태국/중국/대만 코디네이터 채용</span><br>
+                <span style="margin-left:24px;">공고제목: 아웃소싱기업 본사 현장지원파트</span>
+              </div>
+              <div style="margin-top:8px; font-size:12px; color:var(--text-muted);">※ 고용24 게재 가능 고용형태: 정규직, 인턴, 계약직</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="key">에러내용</td>
+            <td>고용24가 판단한 위반 사유</td>
+            <td>어떤 내용이 문제인지 구체적으로 확인</td>
+          </tr>
+          <tr>
+            <td class="key">법위반의심 여부</td>
+            <td>Y / N</td>
+            <td class="red">Y이면 우선 처리 대상</td>
+          </tr>
+          <tr>
+            <td class="key">법령 맵핑 내용</td>
+            <td>위반 법령 근거</td>
+            <td>어떤 법 조항에 해당하는지 확인 가능</td>
+          </tr>
+          <tr>
+            <td class="key">공고 URL</td>
+            <td>실제 공고 링크 <span class="muted">(추가 예정)</span></td>
+            <td>클릭 시 해당 공고 페이지로 이동, 피드백과 실제 공고 대조 가능</td>
+          </tr>
+          <tr>
+            <td class="key">공고제목</td>
+            <td>공고 제목 <span class="muted">(추가 예정)</span></td>
+            <td>URL 클릭 없이도 제목으로 공고를 빠르게 식별 가능</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5. 처리상태 & 저장 -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <span class="step-badge">STEP 5</span>
+      <h2>처리상태 입력 &amp; 저장</h2>
+    </div>
+
+    <!-- 상태 4가지 -->
+    <div class="card">
+      <div class="card-title">처리 상태 5가지</div>
+      <div class="status-grid">
+        <div class="s-card s-gray">
+          <div class="s-dot"></div>
+          <div class="s-name">미검토</div>
+          <div class="s-desc">아직 확인 전 (기본값)</div>
+          <div class="s-when">자동 부여, 별도 입력 불필요</div>
+        </div>
+        <div class="s-card s-amber">
+          <div class="s-dot"></div>
+          <div class="s-name">검토중</div>
+          <div class="s-desc">추가 확인 필요, 판단 유보</div>
+          <div class="s-when">즉시 결론 내리기 어려울 때</div>
+        </div>
+        <div class="s-card s-blue">
+          <div class="s-dot"></div>
+          <div class="s-name">검토완료</div>
+          <div class="s-desc">관리자에서 자체 수정/삭제 완료</div>
+          <div class="s-when">내부 처리로 완료된 건</div>
+        </div>
+        <div class="s-card s-green">
+          <div class="s-dot"></div>
+          <div class="s-name">이상없음</div>
+          <div class="s-desc">JK 정책상 문제 없음 → 공고 유지</div>
+          <div class="s-when">JK 정책상 위배 없을 때</div>
+        </div>
+        <div class="s-card s-red">
+          <div class="s-dot"></div>
+          <div class="s-name">게재중단</div>
+          <div class="s-desc">정책 위배 확인 → 기존 정책에 맞게 처리</div>
+          <div class="s-when">JK 정책 기준 처리 필요 시</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 상태별 메모·비고 참고표 -->
+    <div class="card">
+      <div class="card-title">처리 상태별 메모 · 비고 기준</div>
+      <div class="tbl-wrap">
+        <table class="gen-table">
+          <thead>
+            <tr>
+              <th style="width:100px;">처리상태</th>
+              <th style="width:160px;">메모 (예시)</th>
+              <th>비고</th>
+              <th style="width:120px;">의견</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>⬜ 미검토</td>
+              <td>검토 미완료</td>
+              <td>검토대상</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td style="color:var(--amber); font-weight:600;">🟡 검토중</td>
+              <td>영업자 안내 필요건</td>
+              <td>영업자 안내를 통하여 검토 및 조치예정 건 (향후 운영 정책 수립 필요 케이스)</td>
+              <td>추가필요 판단</td>
+            </tr>
+            <tr>
+              <td style="color:var(--accent); font-weight:600;">🔵 검토완료</td>
+              <td>자체 수정/삭제 완료</td>
+              <td>관리자에서 내부적으로 수정/삭제 완료건</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td style="color:var(--success); font-weight:600;">🟢 이상없음</td>
+              <td>별도 기입 불필요</td>
+              <td>단, 모니터링 대상 제외 필요시 사유 기입필요 (예시: 이모 키워드 포함 불필요)</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td style="color:var(--danger); font-weight:600;">🔴 게재중단</td>
+              <td>마감 완료</td>
+              <td>관리자에서 자체 마감 또는 영업자 안내를 통하여 마감 완료건</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 입력 방법 -->
+    <div class="card">
+      <div class="card-title">입력 방법</div>
+      <ul class="i-steps">
+        <li><div class="num">1</div><span>테이블에서 처리할 행의 <strong>처리상태</strong> 셀 클릭</span></li>
+        <li><div class="num">2</div><span>드롭다운에서 상태 선택</span></li>
+        <li><div class="num">3</div><span><strong>메모</strong> 셀에 필요한 내용 입력 <span style="color:var(--text-muted); font-size:12px;">(선택)</span></span></li>
+        <li><div class="num">4</div><span><strong>💾 저장</strong> 버튼 클릭</span></li>
+      </ul>
+      <div class="callout warn" style="margin-top:14px;">
+        ⚠️ <strong>저장 전 주의</strong>: 버튼에 <code style="background:rgba(0,0,0,0.07); padding:1px 5px; border-radius:4px;">●</code> 표시가 있으면 미저장 변경사항이 있다는 뜻입니다. 탭을 닫거나 새로고침 전에 반드시 저장하세요.
+      </div>
+      <div class="callout success" style="margin-top:8px;">
+        ✅ 저장 완료 시 우측 하단에 <strong>"저장 완료 (N건)"</strong> 메시지가 표시됩니다.
+      </div>
+    </div>
+
+    <!-- 저장 후 -->
+    <div class="card">
+      <div class="card-title">저장 후에는?</div>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:8px;">
+        <li style="font-size:13.5px; color:var(--text-secondary); display:flex; gap:8px;">
+          <span style="color:var(--accent);">→</span>
+          저장된 처리상태·메모는 <strong>공고번호 기준</strong>으로 DB에 보관됩니다.
+        </li>
+        <li style="font-size:13.5px; color:var(--text-secondary); display:flex; gap:8px;">
+          <span style="color:var(--accent);">→</span>
+          다른 날짜로 조회해도, 다른 PC에서 접속해도 <strong>동일하게 표시</strong>됩니다.
+        </li>
+        <li style="font-size:13.5px; color:var(--text-secondary); display:flex; gap:8px;">
+          <span style="color:var(--accent);">→</span>
+          처리상태를 변경하면 <strong>상태변경일</strong>이 자동 기록됩니다. <span style="color:var(--text-muted); font-size:12px;">(YYYY-MM-DD / 미검토로 되돌리면 초기화)</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 6. 정책 이슈 처리 -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <span class="step-badge">STEP 6</span>
+      <h2>필터링 정책 이슈 처리 프로세스</h2>
+    </div>
+    <div class="card">
+      <div class="card-title">처리 분기</div>
+      <div class="branch-grid">
+        <div class="b-card b-blue">
+          <div class="b-tag">✅ 기존 JK 정책으로 처리 가능</div>
+          <p>게재중단 처리 → 잡코리아 어드민에서 직접 처리</p>
+        </div>
+        <div class="b-card b-amber">
+          <div class="b-tag">📧 정책 업데이트 필요</div>
+          <p>메모 기록 → 도메인 담당자에게 메일 전달</p>
+        </div>
+        <div class="b-card b-green">
+          <div class="b-tag">✅ 정책 위배 없음</div>
+          <p>이상없음 처리</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">메모 작성 예시</div>
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'Courier New',monospace; font-size:13px; color:var(--text-secondary); background:var(--surface); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+          "최저임금 기준 위반 의심 — 정책 검토 필요. 도메인 담당자 메일 전달 완료 (05/28)"
+        </div>
+        <div style="font-family:'Courier New',monospace; font-size:13px; color:var(--text-secondary); background:var(--surface); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+          "성차별적 문구 포함 — 게재중단 처리 완료"
+        </div>
+      </div>
+
+      <!-- 실제 공고 예시 -->
+      <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+        <div class="card-title">실제 처리 예시</div>
+        <div class="ex-card">
+          <div class="ex-card-head">
+            <span class="badge">공고번호</span>
+            <span class="num">(신) 49260919</span>
+          </div>
+          <div class="ex-card-body">
+            <div>
+              <div class="ex-row-label">공고 제목</div>
+              <a href="https://www.jobkorea.co.kr/Recruit/GI_Read/49260919" target="_blank"
+                style="font-size:13.5px; color:var(--accent); text-decoration:none; line-height:1.55; word-break:break-all;">
+                [㈜에프에이모스트 채용] [월300만/사무직] 담당브랜드 SNS운영 홍보 바이럴 마케터 | 잡코리아 ↗
+              </a>
+            </div>
+            <div>
+              <div class="ex-row-label">에러 내용</div>
+              <div style="font-size:13px; font-family:'Courier New',monospace; background:var(--surface-2); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); color:var(--text-secondary);">
+                [A9001008] 수신제한대상 키워드 포함된 경우 (채용제목 : '이모')
+              </div>
+            </div>
+            <div class="ex-row-cols">
+              <div>
+                <div class="ex-row-label">처리 상태</div>
+                <span class="ex-status-badge">✅ 이상없음</span>
+              </div>
+              <div>
+                <div class="ex-row-label">메모</div>
+                <div style="font-size:13px; color:var(--text-secondary); line-height:1.55;">
+                  회사명(㈜에프에이모스트) 포함 문자열이며, 공고 내용상 '이모' 관련 내용 없어 이상없음
+                </div>
+              </div>
+            </div>
+            <div class="callout info" style="margin-top:0;">
+              💡 CS에서 이와 같이 피드백을 작성해 주시면, 고용24에 내용을 전달하여 오탐 개선을 요청할 수 있습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout info" style="margin-top:12px;">
+        💡 메일 전달 후에도 메모에 이력을 남겨두면 추후 추적이 가능합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 필터 활용 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <span class="step-badge">STEP 7</span>
+      <h2>필터 활용 가이드</h2>
+    </div>
+    <div class="card">
+      <div class="card-title">사용 가능한 필터</div>
+      <div class="filter-tags" style="margin-bottom:20px;">
+        <span class="f-tag"><span class="f-dot"></span>처리 상태 (전체 / 미검토 / 검토중 / 검토완료 / 이상없음 / 게재중단)</span>
+        <span class="f-tag"><span class="f-dot"></span>오류구분 (전체 / 사전필터링 / 구인 모니터링)</span>
+        <span class="f-tag"><span class="f-dot"></span>법위반의심 Y만</span>
+        <span class="f-tag"><span class="f-dot"></span>법령 맵핑 내용 있는 것만</span>
+        <span class="f-tag"><span class="f-dot"></span>메모 있는 것만</span>
+      </div>
+      <div class="card-title">✅ 권장 일일 업무 순서</div>
+      <ol class="d-list">
+        <li><span><strong>미검토</strong> 필터 → 신규 수신 건 파악</span></li>
+        <li><span><strong>법위반의심 Y만</strong> 체크 → 우선 처리 대상 선별</span></li>
+        <li><span>에러 내용 + 법령 맵핑 확인 → 공고 URL로 실제 공고 대조 <span style="color:var(--text-muted); font-size:12px;">(URL 컬럼 추가 예정)</span></span></li>
+        <li><span>처리상태 입력 + 필요 시 메모 작성</span></li>
+        <li><span>정책 이슈 → 메모 기록 + 도메인 담당자 메일 전달</span></li>
+        <li><span><strong>💾 저장</strong> 클릭</span></li>
+        <li><span><strong>처리완료</strong> 필터로 최종 확인</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 8. 엑셀 다운로드 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <span class="step-badge">STEP 8</span>
+      <h2>엑셀 다운로드</h2>
+    </div>
+    <div class="card">
+      <p style="font-size:13.5px; color:var(--text-secondary); margin-bottom:16px;">
+        <strong>📥 엑셀 다운로드 (전체)</strong> 버튼 클릭 — 현재 조회 기간 전체 데이터 다운로드 <span style="color:var(--text-muted); font-size:12px;">(화면 필터와 무관하게 전체 출력)</span>
+      </p>
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px;">
+        <div class="xl-row"><div class="swatch" style="background:#C0DD97;"></div><span style="font-weight:600;">이상없음</span><span style="color:var(--text-muted); font-size:13px; margin-left:4px;">— 연초록 행</span></div>
+        <div class="xl-row"><div class="swatch" style="background:#FAC775;"></div><span style="font-weight:600;">검토중</span><span style="color:var(--text-muted); font-size:13px; margin-left:4px;">— 연노란색 행</span></div>
+        <div class="xl-row"><div class="swatch" style="background:#D6E8FB;"></div><span style="font-weight:600;">검토완료</span><span style="color:var(--text-muted); font-size:13px; margin-left:4px;">— 연파랑 행</span></div>
+        <div class="xl-row"><div class="swatch" style="background:#F7C1C1;"></div><span style="font-weight:600;">게재중단</span><span style="color:var(--text-muted); font-size:13px; margin-left:4px;">— 연빨강 행</span></div>
+        <div class="xl-row"><div class="swatch" style="background:#e8e6e0;"></div><span style="font-weight:600;">미검토</span><span style="color:var(--text-muted); font-size:13px; margin-left:4px;">— 흰색/연파랑 교차</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section" id="faq">
+    <div class="section-header">
+      <span class="step-badge" style="background:var(--surface-2); color:var(--text-primary); border:1px solid var(--border);">FAQ</span>
+      <h2>자주 묻는 질문</h2>
+    </div>
+    <div class="card">
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-mark">Q</span> 조회했는데 데이터가 없어요.</div>
+        <div class="faq-a">해당 기간에 고용24 피드백이 없는 것입니다. 기간을 넓히거나 다음 날 다시 확인하세요.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-mark">Q</span> 저장했는데 다음에 조회하면 처리상태가 안 보여요.</div>
+        <div class="faq-a">다른 기간으로 조회하면 해당 공고번호가 결과에 포함되지 않을 수 있습니다. <strong>공고번호로 직접 검색</strong>하거나 해당 날짜로 조회하면 저장된 상태를 확인할 수 있습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-mark">Q</span> 게재중단으로 바꿨는데 실제 공고 처리는 어떻게 하나요?</div>
+        <div class="faq-a">이 도구는 처리 상태를 <strong>기록하는 용도</strong>입니다. 실제 공고 게재중단은 기존 잡코리아 어드민에서 별도로 처리해야 합니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-mark">Q</span> 여러 명이 동시에 사용할 수 있나요?</div>
+        <div class="faq-a">네, 가능합니다. 저장 시 공고번호 기준으로 덮어쓰므로 <strong>마지막에 저장한 내용이 유지</strong>됩니다. 동시 작업 시 서로 다른 공고를 담당하도록 조율하세요.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="q-mark">Q</span> 필터링 정책 이슈는 어떻게 처리하나요?</div>
+        <div class="faq-a">메모란에 이슈 내용을 기록하고 도메인 담당자에게 메일로 전달합니다. 메일 전달 후 메모에 이력도 함께 남겨주세요.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 금칙어 -->
+  <div class="section" id="s-forbidden">
+    <div class="section-header">
+      <span class="step-badge" style="background:var(--surface-2); color:var(--text-primary); border:1px solid var(--border);">참고</span>
+      <h2>고용24 금칙어</h2>
+    </div>
+    <div class="card">
+      <div class="callout warn" style="margin-bottom:16px;">
+        ⚠️ 아래 키워드가 공고 제목 또는 상세요강에 포함되면 워크넷 피드백 대상이 됩니다.
+      </div>
+      <div class="tbl-wrap">
+        <table class="gen-table">
+          <thead>
+            <tr>
+              <th style="width:130px;">분류</th>
+              <th>키워드</th>
+              <th style="width:52px; text-align:center;">건수</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>성별</strong></td>
+              <td>남자, 여자, (남), (여), 여성, 남성, 男, 女, 여사원, 남사원, 여직원, 남직원, 여사무원, 남사무원, 남 사원, 여 사원, 남 직원, 여 직원, 여 사무원, 여사, 이모, 주부, 동성애</td>
+              <td style="text-align:center;">23</td>
+            </tr>
+            <tr>
+              <td><strong>나이/연령</strong></td>
+              <td>세 이하, 세이하, 세 이상, 세이상, 세 미만, 세미만, 세초과, 세 초과, 세~, 세 ~, 0대, 0세, 1세, 2세, 3세, 4세, 5세, 6세, 7세, 8세, 9세, 청년</td>
+              <td style="text-align:center;">22</td>
+            </tr>
+            <tr>
+              <td><strong>고용형태</strong></td>
+              <td>인력공급, 파견, 헤드헌트, 헤드헌팅, 아웃소싱, 인력알선, 알바, 아르바이트, 투잡, 부업, 프리랜서, 위촉, 학습지, 집에서</td>
+              <td style="text-align:center;">14</td>
+            </tr>
+            <tr>
+              <td><strong>교육/훈련</strong></td>
+              <td>교육생, 실습생, 연수생</td>
+              <td style="text-align:center;">3</td>
+            </tr>
+            <tr>
+              <td><strong>서류 요구</strong></td>
+              <td>등본, 초본, 신분증, 면허증, 여권, 가족관계증명서, 기본증명서</td>
+              <td style="text-align:center;">7</td>
+            </tr>
+            <tr>
+              <td><strong>신체/외모</strong></td>
+              <td>cm, CM, 신장, 키, 용모, 체중, 몸무게</td>
+              <td style="text-align:center;">7</td>
+            </tr>
+            <tr>
+              <td><strong>종교</strong></td>
+              <td>불교, 천주교, 교회, 기독교</td>
+              <td style="text-align:center;">4</td>
+            </tr>
+            <tr>
+              <td><strong>개인정보/<br>가족배경</strong></td>
+              <td>결혼, 혼인, 가족관계, 출신, 본적, 등록기준지, 재산, 자산, 부모, 학력, 부 학력, 모 학력, 형제자매 학력, 형제 학력, 자매 학력, 부모 직업, 부 직업, 모 직업, 형제자매 직업, 형제 직업, 자매 직업</td>
+              <td style="text-align:center;">21</td>
+            </tr>
+            <tr>
+              <td><strong>국적/민족</strong></td>
+              <td>캄보디아, 베트남, 태국, 라오스, 미얀마</td>
+              <td style="text-align:center;">5</td>
+            </tr>
+            <tr>
+              <td><strong>허위/과장광고</strong></td>
+              <td>고소득, 고수익, 대박 사업, 대박사업</td>
+              <td style="text-align:center;">4</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text-muted);">총 110개 키워드 — 공고 제목 또는 상세요강 포함 시 피드백 대상</div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="contact-box">
+    <div>
+      <h3>문의</h3>
+      <p>도구 관련 불편사항이나 기능 요청은 아래 채널로 연락주세요.</p>
+    </div>
+    <div class="contact-chip">Slack #support-product-외부채널</div>
+  </div>
+
+</div>
+</body>
+</html>
