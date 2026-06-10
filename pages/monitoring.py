@@ -23,9 +23,9 @@ COLUMNS = [
     ("createDtm",     "모니터링일시"),
     ("ifDtm",         "연계일시"),
     ("errCont",       "에러내용"),
+    ("wantedInfoUrl", "구인공고 URL"),
     ("lawVoltDobtYn", "법위반의심 여부"),
     ("lawMappCont",   "법령 맵핑 내용"),
-    ("wantedInfoUrl", "구인공고 URL"),
 ]
 
 STATUS_OPTIONS = ["미검토", "검토중", "검토완료", "이상없음", "게재중단"]
