@@ -59,7 +59,7 @@ def build_daily(raw):
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
     st.page_link("pages/monitoring.py", label="← 모니터링", use_container_width=True)
-    st.link_button("📖 운영 가이드", "https://work24-pyw88x4mc8x73dzdh36smj.streamlit.app/app/static/guide.html", use_container_width=True)
+    st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
     st.title("📊 월별 현황")
     auth_key = st.text_input("인증키 *", type="password", placeholder="발급받은 인증키 입력")
     col1, col2 = st.columns(2)

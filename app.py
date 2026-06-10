@@ -8,5 +8,6 @@ if _css.exists():
 pg = st.navigation([
     st.Page("pages/monitoring.py", title="📋 모니터링", icon="🔍"),
     st.Page("pages/monthly.py",    title="📊 월별 현황", icon="📊"),
+    st.Page("pages/guide.py",      title="📖 운영 가이드", icon="📖"),
 ], position="hidden")
 pg.run()

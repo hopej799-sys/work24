@@ -122,7 +122,7 @@ with st.sidebar:
     st.divider()
     st.markdown("**관리**")
     st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
-    st.link_button("📖 운영 가이드", "https://work24-pyw88x4mc8x73dzdh36smj.streamlit.app/app/static/guide.html", use_container_width=True)
+    st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
 
 
 def validate():
