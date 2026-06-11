@@ -4,8 +4,6 @@
    * 토큰 출처: DSG_템플릿/components/Foundation/*
    ===================================================================== */
 
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
-
 /* ── DSG 토큰 → CSS 변수 ───────────────────────────── */
 :root {
   /* brand / interactive */
