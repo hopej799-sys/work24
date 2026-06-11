@@ -1,75 +1,225 @@
-/* ── 전체 폰트 / 배경 ───────────────────────────── */
+/* =====================================================================
+   work24 — DSG 2.0 디자인 시스템 기반 스타일
+   * 디자인만 정의 (로직/기능 변경 없음)
+   * 토큰 출처: DSG_템플릿/components/Foundation/*
+   ===================================================================== */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+/* ── DSG 토큰 → CSS 변수 ───────────────────────────── */
+:root {
+  /* brand / interactive */
+  --color-bg-interactive-primary: #083CCC;
+  --color-bg-interactive-primary-hovered: #012CA2;
+  --color-bg-interactive-disabled: #D5D8DC;
+  --color-brand-500: #1B55F6;
+  --color-brand-400: #4C7AFB;
+  --label-bg-primary: #F0F2FA;     /* brand50 */
+  /* text */
+  --color-text-primary: #1A1A1E;
+  --color-text-secondary: #3E434B;
+  --color-text-tertiary: #768091;
+  --color-text-quaternary: #949BA8;
+  /* surface / border */
+  --bg-base: #FFFFFF;
+  --bg-gray50: #F6F7F8;
+  --line-gray100: #E6E8EA;
+  --line-gray200: #D5D8DC;
+  --line-gray300: #C2C6CD;
+  /* status (DSG Tag/semantic) */
+  --color-success: #0D9B67;  --bg-success: #EAFAF4;
+  --color-danger:  #F11E1E;  --bg-danger:  #FBF5F5;
+  --color-warning: #C98A00;  --bg-warning: #FFF9E6;
+  --color-info:    #207CF4;  --bg-info:    #F0F2FA;
+  /* radius */
+  --radius-xs: 6px; --radius-md: 10px; --radius-lg: 10px; --radius-xl: 12px; --radius-pill: 999px;
+  /* spacing (unit-*) */
+  --unit-4: 4px; --unit-6: 6px; --unit-8: 8px; --unit-10: 10px;
+  --unit-12: 12px; --unit-14: 14px; --unit-16: 16px; --unit-20: 20px; --unit-24: 24px;
+  /* shadow */
+  --shadow-list: 0 4px 8px rgba(0,0,0,0.02);
+  --shadow-default: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-up: 0 -2px 12px rgba(0,0,0,0.06);
+}
+
+/* ── 전체 폰트 / 배경 (Pretendard) ──────────────────── */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
+  font-family: "Pretendard", "Pretendard Variable", -apple-system, "맑은 고딕", "Malgun Gothic", sans-serif;
+}
 [data-testid="stAppViewContainer"] {
-    font-family: "맑은 고딕", "Malgun Gothic", sans-serif;
+  background-color: var(--bg-gray50);
+  color: var(--color-text-primary);
 }
+[data-testid="stMainBlockContainer"] { padding-top: var(--unit-24); }
 
-/* ── 사이드바 ───────────────────────────────────── */
-[data-testid="stSidebar"] {
-    background-color: #f5f7fa;
-}
-
-[data-testid="stSidebar"] .stButton > button {
-    background-color: #1F5C8B;
-    color: white;
-    border: none;
-    border-radius: 6px;
-}
-
-[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #174a72;
-}
-
-/* ── 메인 타이틀 ─────────────────────────────────── */
+/* ── 타이포그래피 (DSG Typography) ─────────────────── */
 h1 {
-    color: #1F5C8B;
-    font-size: 1.6rem !important;
+  color: var(--color-text-primary) !important;
+  font-size: 1.5rem !important;       /* H4 20~24 */
+  font-weight: 700 !important;
+  letter-spacing: -0.3px;
 }
+h2 { color: var(--color-text-primary) !important; font-weight: 700 !important; }
+h3 { color: var(--color-text-secondary) !important; font-weight: 600 !important; }
 
-/* ── 요약 지표 카드 ───────────────────────────────── */
-[data-testid="stMetric"] {
-    background-color: #f0f4f9;
-    border-radius: 10px;
-    padding: 14px 18px;
-    border-left: 4px solid #1F5C8B;
-}
-
-[data-testid="stMetricLabel"] {
-    font-size: 0.82rem !important;
-    color: #555;
-}
-
-[data-testid="stMetricValue"] {
-    font-size: 1.5rem !important;
-    color: #1F5C8B;
-    font-weight: 700;
-}
-
-/* ── 저장 버튼 ───────────────────────────────────── */
-[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"] {
-    background-color: #1F5C8B;
-    border-radius: 6px;
-    font-weight: 600;
-}
-
-[data-testid="stMainBlockContainer"] .stButton > button[kind="primary"]:hover {
-    background-color: #174a72;
-}
-
-/* ── 데이터 테이블 헤더 ───────────────────────────── */
-[data-testid="stDataEditor"] thead tr th {
-    background-color: #1F5C8B !important;
-    color: white !important;
-    font-weight: 600;
-}
-
-/* ── expander (결과 필터) ─────────────────────────── */
-[data-testid="stExpander"] {
-    border: 1px solid #dde3ec;
-    border-radius: 8px;
-}
-
-/* ── 캡션 / 구분선 ───────────────────────────────── */
+/* 캡션 → text-tertiary (C1 13) */
 [data-testid="stCaptionContainer"] {
-    color: #888;
-    font-size: 0.78rem;
+  color: var(--color-text-tertiary) !important;
+  font-size: 0.8rem !important;
 }
+
+/* ── 사이드바 (surface) ─────────────────────────────── */
+[data-testid="stSidebar"] {
+  background-color: var(--bg-base);
+  border-right: 1px solid var(--line-gray100);
+}
+[data-testid="stSidebar"] .stTitle, [data-testid="stSidebar"] h1 {
+  font-size: 1.15rem !important;
+}
+
+/* ── 버튼 (DSG Button) ─────────────────────────────── */
+/* Primary = theme-primary */
+.stButton > button[kind="primary"],
+.stDownloadButton > button[kind="primary"] {
+  background-color: var(--color-bg-interactive-primary) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 600 !important;
+  padding: var(--unit-12) var(--unit-16) !important;
+  transition: background-color .15s ease;
+}
+.stButton > button[kind="primary"]:hover,
+.stDownloadButton > button[kind="primary"]:hover {
+  background-color: var(--color-bg-interactive-primary-hovered) !important;
+}
+/* Secondary = theme-outlined/borderless */
+.stButton > button:not([kind="primary"]),
+.stDownloadButton > button:not([kind="primary"]),
+[data-testid="stPageLink"] a {
+  background-color: var(--bg-base) !important;
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--line-gray200) !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+  transition: background-color .15s ease;
+}
+.stButton > button:not([kind="primary"]):hover,
+.stDownloadButton > button:not([kind="primary"]):hover,
+[data-testid="stPageLink"] a:hover {
+  background-color: var(--bg-gray50) !important;
+  border-color: var(--line-gray300) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* ── 요약 지표 카드 (DSG Card) ─────────────────────── */
+[data-testid="stMetric"] {
+  background-color: var(--bg-base);
+  border: 1px solid var(--line-gray100);
+  border-radius: var(--radius-xl);
+  padding: var(--unit-16) var(--unit-20);
+  box-shadow: var(--shadow-list);
+}
+[data-testid="stMetricLabel"] {
+  font-size: 0.8rem !important;
+  color: var(--color-text-tertiary) !important;
+  font-weight: 500;
+}
+[data-testid="stMetricValue"] {
+  font-size: 1.5rem !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 700;
+}
+/* 첫 카드(총 건수)는 브랜드 강조 */
+[data-testid="stColumn"]:first-child [data-testid="stMetric"] {
+  background-color: var(--label-bg-primary);
+  border-color: transparent;
+}
+[data-testid="stColumn"]:first-child [data-testid="stMetricValue"] {
+  color: var(--color-brand-500) !important;
+}
+
+/* ── 입력 요소 (DSG Input/Selectbox) ───────────────── */
+[data-testid="stTextInput"] input,
+[data-testid="stDateInput"] input,
+[data-baseweb="select"] > div,
+[data-baseweb="input"] {
+  border-radius: var(--radius-xl) !important;
+  border-color: var(--line-gray200) !important;
+  background-color: var(--bg-base) !important;
+  color: var(--color-text-primary) !important;
+}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stDateInput"] input:focus {
+  border-color: var(--color-bg-interactive-primary) !important;
+  box-shadow: 0 0 0 2px rgba(8,60,204,0.12) !important;
+}
+[data-testid="stTextInput"] input::placeholder { color: var(--color-text-quaternary) !important; }
+
+/* 체크박스/라디오 강조색 (Controls) */
+[data-testid="stCheckbox"] input,
+[data-testid="stRadio"] input { accent-color: var(--color-bg-interactive-primary); }
+
+/* ── expander (DSG Card/Bottom Sheet 느낌) ─────────── */
+[data-testid="stExpander"] {
+  border: 1px solid var(--line-gray100) !important;
+  border-radius: var(--radius-xl) !important;
+  background-color: var(--bg-base);
+  box-shadow: var(--shadow-list);
+  overflow: hidden;
+}
+[data-testid="stExpander"] summary { font-weight: 600; color: var(--color-text-secondary); }
+
+/* ── 데이터 테이블 (헤더 = DSG 정렬) ───────────────── */
+[data-testid="stDataEditor"] thead tr th,
+[data-testid="stDataFrame"] thead tr th {
+  background-color: var(--bg-gray50) !important;
+  color: var(--color-text-secondary) !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--line-gray200) !important;
+}
+[data-testid="stDataEditor"], [data-testid="stDataFrame"] {
+  border: 1px solid var(--line-gray100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ── 알림 박스 (DSG Toast/Label 톤) ────────────────── */
+[data-testid="stAlert"] { border-radius: var(--radius-md) !important; border: none !important; }
+[data-testid="stAlertContainer"] { border-radius: var(--radius-md) !important; }
+/* info */
+[data-testid="stAlert"][data-baseweb] { background-color: var(--bg-info); }
+
+/* ── 구분선 / 토스트 ────────────────────────────────── */
+hr { border-color: var(--line-gray100) !important; }
+[data-testid="stToast"] {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-default) !important;
+}
+
+/* ── 비활성/에러 상태 디테일 ─────────────────────────── */
+.stButton > button:disabled,
+.stDownloadButton > button:disabled {
+  background-color: var(--color-bg-interactive-disabled) !important;
+  color: #ffffff !important; border: none !important; cursor: not-allowed;
+}
+[data-testid="stTextInput"] input[aria-invalid="true"],
+[data-testid="stDateInput"] input[aria-invalid="true"] {
+  border-color: var(--color-danger) !important;
+  box-shadow: 0 0 0 2px rgba(241,30,30,0.10) !important;
+}
+
+/* ── 유틸리티: 상태 태그 (st.markdown(unsafe_allow_html)에서 사용) ──
+   예) st.markdown('<span class="jtag green">이상없음</span>', unsafe_allow_html=True) */
+.jtag{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--radius-xs);
+  font-size:12px;font-weight:600;line-height:1;}
+.jtag.green {background:var(--bg-success); color:var(--color-success);}   /* 이상없음 */
+.jtag.red   {background:var(--bg-danger);  color:var(--color-danger);}    /* 게재중단 */
+.jtag.amber {background:var(--bg-warning); color:var(--color-warning);}   /* 검토중 */
+.jtag.gray  {background:var(--bg-gray50);  color:var(--color-text-tertiary);} /* 미검토 */
+.jtag.brand {background:var(--label-bg-primary); color:var(--color-brand-500);}
+
+/* 상태 점(dot) 유틸 */
+.jdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+.jdot.ok{background:var(--color-success);} .jdot.stop{background:var(--color-danger);}
+.jdot.ing{background:var(--color-warning);} .jdot.none{background:var(--line-gray300);}
