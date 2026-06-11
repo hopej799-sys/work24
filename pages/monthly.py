@@ -91,9 +91,10 @@ if run_btn:
 
     daily = build_daily(raw)
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     c1.metric("전체 합계(raw)", f"{daily['전체(raw)'].sum():,}건")
     c2.metric("신규 공고 합계", f"{daily['신규 공고'].sum():,}건")
+    c3.metric("유니크 공고 (월 전체)", f"{raw['공고번호'].nunique():,}건")
 
     st.divider()
     st.caption("전체: 중복 포함 raw 건수 / 신규 공고: 해당 날짜에 처음 등장한 공고번호 수 (이전 날짜 이미 나온 공고 제외)")
