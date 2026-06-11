@@ -90,7 +90,6 @@ if run_btn:
     daily = build_daily(raw)
     total_raw    = int(daily["피드백 건수(raw)"].sum())
     unique_count = int(raw["공고번호"].nunique())
-    dup_count    = total_raw - unique_count
 
     c1, c2 = st.columns(2)
     c1.metric("피드백 건수 (raw)", f"{total_raw:,}건",
@@ -100,11 +99,11 @@ if run_btn:
 
     st.divider()
     st.caption(
-        f"※ 아래 통계는 조회한 월({sel_year}년 {sel_month}월) 기준입니다. 이전 달 데이터는 포함되지 않습니다.\n"
-        f"피드백 건수(raw): API가 반환한 전체 오류 횟수로 같은 공고도 에러 유형·날짜별로 중복 집계됩니다. "
-        f"유니크 공고 수: 공고번호 기준 중복 제거한 실제 이슈 공고 수입니다. "
-        f"두 값의 차이({dup_count:,}건)는 동일 공고가 해당 월에 2회 이상 반복 오류로 잡힌 건수입니다. "
-        f"일별 신규 공고는 해당 날짜에 이번 달 처음 등장한 공고번호 수로, 당일 새로 유입된 공고 규모를 파악할 때 사용합니다."
+        f"※ 통계 설명\n"
+        f"* 아래 통계는 조회한 월({sel_year}년 {sel_month}월) 기준입니다. 이전 달 데이터는 포함되지 않습니다.\n"
+        f"* 피드백 건수(raw): API가 반환한 전체 오류 횟수로 같은 공고도 에러 유형·날짜별로 중복 집계됩니다.\n"
+        f"* 유니크 공고 수: 공고번호 기준 중복 제거한 실제 이슈 공고 수입니다.\n"
+        f"* 일별 신규 공고는 해당 날짜에 이번 달 처음 등장한 공고번호 수로, 당일 새로 유입된 공고 규모를 파악할 때 사용합니다."
     )
     st.dataframe(daily, hide_index=True, use_container_width=True)
 
