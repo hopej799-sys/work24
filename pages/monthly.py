@@ -47,7 +47,12 @@ def fetch_month(year, month, auth):
 def build_daily(raw):
     raw = raw[raw["날짜"].str.len() == 10].copy()
     total = raw.groupby("날짜").size().rename("피드백 건수(raw)")
-    df = total.reset_index()
+    # 날짜순 정렬 후 공고번호 첫 등장일만 추출 → 해당월 기준 당일 신규 공고 수
+    first = (raw.sort_values("날짜")
+                .drop_duplicates(subset=["공고번호"], keep="first")
+                .groupby("날짜")["공고번호"].count()
+                .rename("신규 공고"))
+    df = pd.concat([total, first], axis=1).fillna(0).astype(int).reset_index()
     return df
 
 
@@ -103,9 +108,11 @@ if run_btn:
 | 유니크 공고 수 | {unique_count:,}건 | 실제 오류가 발생한 공고 수. 공고번호 기준 중복 제거 |
 | 중복 피드백 수 | {dup_count:,}건 | 동일 공고가 기간 내 2회 이상 잡힌 건수 (raw - 유니크) |
 
-> **raw ≥ 유니크** 는 항상 성립합니다.
-> raw와 유니크 차이가 클수록, 동일 공고가 반복적으로 오류를 일으키고 있다는 의미입니다.
-> 아래 일별 표는 날짜별 raw 피드백 건수 추이를 보여줍니다.
+> **raw ≥ 유니크** 는 항상 성립합니다. 차이가 클수록 동일 공고가 반복적으로 오류를 일으키고 있다는 의미입니다.
+
+**일별 표 컬럼 안내**
+- **피드백 건수(raw)**: 해당 날짜의 전체 오류 피드백 횟수 (중복 포함)
+- **신규 공고**: 해당 날짜에 **이번 달 처음** 등장한 공고 수 — 전날까지 없던 공고번호만 카운트. CS 운영 관점에서 당일 새로 유입된 공고 규모를 파악할 때 사용
 """)
     st.dataframe(daily, hide_index=True, use_container_width=True)
 
