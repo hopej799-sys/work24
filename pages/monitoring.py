@@ -389,7 +389,7 @@ with st.expander("🔧 결과 필터", expanded=True):
     with cb3:
         memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
 
-filtered = view_df.copy()
+filtered = base_df.copy()   # pending 미반영 — 에디터 데이터 안정화 (행 위치 유지)
 if status_filter != "전체":
     filtered = filtered[filtered["처리상태"] == status_filter]
 if err_type_filter == "사전필터링만 보기":
@@ -401,7 +401,11 @@ if law_volt_only:
 if law_only:
     filtered = filtered[filtered["법령 맵핑 내용"].str.strip().ne("")]
 if memo_only:
-    filtered = filtered[filtered["메모"].str.strip().ne("")]
+    has_saved_memo   = filtered["메모"].str.strip().ne("")
+    has_pending_memo = filtered["공고번호"].map(
+        lambda k: bool(str(pending.get(k, {}).get("메모", "") or "").strip())
+    )
+    filtered = filtered[has_saved_memo | has_pending_memo]
 
 filtered_display = filtered.reset_index(drop=True)
 st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
