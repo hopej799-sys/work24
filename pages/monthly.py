@@ -119,6 +119,8 @@ with tab1:
         daily        = build_daily(raw)
         total_raw    = int(daily["피드백 건수(raw)"].sum())
         unique_count = int(raw["공고번호"].nunique())
+        st.session_state["monthly_daily"] = daily.copy()   # Tab 2에서 병합용
+        st.session_state["monthly_key"]   = (sel_year, sel_month)
 
         c1, c2 = st.columns(2)
         c1.metric("피드백 건수 (raw)", f"{total_raw:,}건",
@@ -167,7 +169,19 @@ with tab2:
         ordered_cols = [s for s in STATUS_ORDER if s in pivot.columns]
         pivot = pivot[["날짜"] + ordered_cols]
         pivot.insert(1, "합계", pivot[ordered_cols].sum(axis=1))
-        pivot = pivot.sort_values("날짜", ascending=False).reset_index(drop=True)
+        # API 피드백 데이터가 같은 월로 조회된 경우 병합
+        api_daily = st.session_state.get("monthly_daily")
+        api_key   = st.session_state.get("monthly_key")
+        if api_daily is not None and api_key == (sel_year, sel_month):
+            pivot = pivot.merge(api_daily, on="날짜", how="outer").fillna(0)
+            pivot["합계"]          = pivot["합계"].astype(int)
+            pivot["피드백 건수(raw)"] = pivot["피드백 건수(raw)"].astype(int)
+            pivot["신규 공고"]     = pivot["신규 공고"].astype(int)
+            # 컬럼 순서: 날짜 | 피드백(raw) | 신규 공고 | 합계 | 상태별
+            front = ["날짜", "피드백 건수(raw)", "신규 공고", "합계"]
+            pivot = pivot[front + ordered_cols]
+
+        pivot = pivot.sort_values("날짜", ascending=True).reset_index(drop=True)
 
         st.caption(
             f"※ {sel_year}년 {sel_month}월 기준 처리 현황입니다.\n"
