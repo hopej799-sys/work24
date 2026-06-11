@@ -46,15 +46,8 @@ def fetch_month(year, month, auth):
 
 def build_daily(raw):
     raw = raw[raw["날짜"].str.len() == 10].copy()
-    total = raw.groupby("날짜").size().rename("전체(raw)")
-
-    # 날짜 순으로 정렬 후 공고번호 첫 등장 날짜만 추출 → 당일 신규 공고 수
-    first = (raw.sort_values("날짜")
-                .drop_duplicates(subset=["공고번호"], keep="first")
-                .groupby("날짜")["공고번호"].count()
-                .rename("신규 공고"))
-
-    df = pd.concat([total, first], axis=1).fillna(0).astype(int).reset_index()
+    total = raw.groupby("날짜").size().rename("피드백 건수(raw)")
+    df = total.reset_index()
     return df
 
 
@@ -90,14 +83,30 @@ if run_btn:
         st.stop()
 
     daily = build_daily(raw)
+    total_raw    = int(daily["피드백 건수(raw)"].sum())
+    unique_count = int(raw["공고번호"].nunique())
+    dup_count    = total_raw - unique_count
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("전체 합계(raw)", f"{daily['전체(raw)'].sum():,}건")
-    c2.metric("신규 공고 합계", f"{daily['신규 공고'].sum():,}건")
-    c3.metric("유니크 공고 (월 전체)", f"{raw['공고번호'].nunique():,}건")
+    c1, c2 = st.columns(2)
+    c1.metric("피드백 건수 (raw)", f"{total_raw:,}건",
+              help="API에서 받은 모든 피드백 횟수. 한 공고가 여러 에러로 여러 번 잡히면 그 횟수만큼 포함.")
+    c2.metric("유니크 공고 수", f"{unique_count:,}건",
+              help="공고번호 기준 중복 제거. 실제로 이슈가 발생한 공고 수.")
 
     st.divider()
-    st.caption("전체: 중복 포함 raw 건수 / 신규 공고: 해당 날짜에 처음 등장한 공고번호 수 (이전 날짜 이미 나온 공고 제외)")
+    st.markdown(f"""
+**📊 통계 해석 가이드**
+
+| 항목 | 값 | 설명 |
+|------|------|------|
+| 피드백 건수 (raw) | {total_raw:,}건 | API가 반환한 전체 오류 피드백 횟수. 같은 공고도 에러 유형별·일자별로 중복 집계됨 |
+| 유니크 공고 수 | {unique_count:,}건 | 실제 오류가 발생한 공고 수. 공고번호 기준 중복 제거 |
+| 중복 피드백 수 | {dup_count:,}건 | 동일 공고가 기간 내 2회 이상 잡힌 건수 (raw - 유니크) |
+
+> **raw ≥ 유니크** 는 항상 성립합니다.
+> raw와 유니크 차이가 클수록, 동일 공고가 반복적으로 오류를 일으키고 있다는 의미입니다.
+> 아래 일별 표는 날짜별 raw 피드백 건수 추이를 보여줍니다.
+""")
     st.dataframe(daily, hide_index=True, use_container_width=True)
 
 else:
