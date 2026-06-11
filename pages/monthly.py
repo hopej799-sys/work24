@@ -46,13 +46,15 @@ def fetch_month(year, month, auth):
 
 def build_daily(raw):
     raw = raw[raw["날짜"].str.len() == 10].copy()
-    total  = raw.groupby("날짜").size().rename("전체(raw)")
-    excl   = raw[~raw["에러내용"].str.contains("고용형태", na=False)].groupby("날짜").size().rename("고용형태 제외(raw)")
-    unique = (raw.drop_duplicates(subset=["공고번호"])
-                 .groupby("날짜")["공고번호"].count()
-                 .rename("유니크"))
-    df = pd.concat([total, excl, unique], axis=1).fillna(0).astype(int).reset_index()
-    df.rename(columns={"날짜": "날짜"}, inplace=True)
+    total = raw.groupby("날짜").size().rename("전체(raw)")
+
+    # 날짜 순으로 정렬 후 공고번호 첫 등장 날짜만 추출 → 당일 신규 공고 수
+    first = (raw.sort_values("날짜")
+                .drop_duplicates(subset=["공고번호"], keep="first")
+                .groupby("날짜")["공고번호"].count()
+                .rename("신규 공고"))
+
+    df = pd.concat([total, first], axis=1).fillna(0).astype(int).reset_index()
     return df
 
 
@@ -89,13 +91,12 @@ if run_btn:
 
     daily = build_daily(raw)
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     c1.metric("전체 합계(raw)", f"{daily['전체(raw)'].sum():,}건")
-    c2.metric("고용형태 제외(raw)", f"{daily['고용형태 제외(raw)'].sum():,}건")
-    c3.metric("유니크 합계", f"{daily['유니크'].sum():,}건")
+    c2.metric("신규 공고 합계", f"{daily['신규 공고'].sum():,}건")
 
     st.divider()
-    st.caption("전체·고용형태 제외: 중복 포함 raw 건수 / 유니크: 공고번호 기준 중복 제거")
+    st.caption("전체: 중복 포함 raw 건수 / 신규 공고: 해당 날짜에 처음 등장한 공고번호 수 (이전 날짜 이미 나온 공고 제외)")
     st.dataframe(daily, hide_index=True, use_container_width=True)
 
 else:
