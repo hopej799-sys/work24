@@ -82,8 +82,7 @@ def load_cs_processing(year, month):
 
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
-    st.page_link("pages/monitoring.py", label="← 모니터링", use_container_width=True)
-    st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
+    st.page_link("pages/monitoring.py", label="← 모니터링으로 돌아가기", use_container_width=True)
     st.title("📊 월별 현황")
     col1, col2 = st.columns(2)
     with col1:
