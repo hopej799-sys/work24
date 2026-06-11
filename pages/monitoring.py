@@ -376,23 +376,25 @@ law_volt_count = (view_df["법위반의심 여부"] == "Y").sum()
 
 # ── 결과 필터 ─────────────────────────────────
 with st.expander("🔧 결과 필터", expanded=True):
-    f1, f2, f3 = st.columns([2, 2, 1])
-    with f1:
+    fc1, fc2 = st.columns(2)
+    with fc1:
         status_filter = st.selectbox("처리 상태", ["전체", "미검토", "검토중", "검토완료", "이상없음", "게재중단"])
-    with f2:
-        err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링", "구인 모니터링"])
-    with f3:
-        st.markdown("<br>", unsafe_allow_html=True)
+    with fc2:
+        err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링만 보기", "구인모니터링만 보기"])
+    cb1, cb2, cb3 = st.columns(3)
+    with cb1:
         law_volt_only = st.checkbox(f"법위반의심 Y만 ({law_volt_count:,}건)")
+    with cb2:
         law_only      = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)")
+    with cb3:
         memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
 
 filtered = view_df.copy()
 if status_filter != "전체":
     filtered = filtered[filtered["처리상태"] == status_filter]
-if err_type_filter == "사전필터링":
+if err_type_filter == "사전필터링만 보기":
     filtered = filtered[filtered["오류구분"].str.contains("사전", na=False)]
-elif err_type_filter == "구인 모니터링":
+elif err_type_filter == "구인모니터링만 보기":
     filtered = filtered[filtered["오류구분"].str.contains("구인", na=False)]
 if law_volt_only:
     filtered = filtered[filtered["법위반의심 여부"] == "Y"]
