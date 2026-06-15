@@ -124,11 +124,14 @@ with st.sidebar:
             {"공고번호": k, "처리상태": v["처리상태"], "메모": v["메모"], "상태변경일": v.get("상태변경일", "")}
             for k, v in _store.items()
         ])
+        _dl_buf = io.BytesIO()
+        _dl_df.to_excel(_dl_buf, index=False, engine="openpyxl")
+        _dl_buf.seek(0)
         st.download_button(
-            label=f"📥 처리내역 CSV ({len(_dl_df):,}건)",
-            data=_dl_df.to_csv(index=False, encoding="utf-8-sig"),
-            file_name=f"처리내역_{date.today().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
+            label=f"📥 처리내역 엑셀 ({len(_dl_df):,}건)",
+            data=_dl_buf,
+            file_name=f"처리내역_{date.today().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
             key="dl_store",
         )
