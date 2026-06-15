@@ -116,6 +116,33 @@ with st.sidebar:
     st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
     st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
 
+    st.divider()
+    st.markdown("**저장 데이터 내보내기**")
+    if st.button("📥 처리내역 다운로드", use_container_width=True):
+        rows = _sb().table("memo_store").select("*").execute().data
+        if rows:
+            dl_df = pd.DataFrame(rows).rename(columns={
+                "wanted_auth_no":   "공고번호",
+                "status":           "처리상태",
+                "memo":             "메모",
+                "status_changed_at": "상태변경일",
+            })
+            dl_df = dl_df[["공고번호", "처리상태", "메모", "상태변경일"]]
+            st.session_state["_dl_df"] = dl_df
+        else:
+            st.info("저장된 데이터가 없습니다.")
+
+    if "_dl_df" in st.session_state:
+        dl_df = st.session_state["_dl_df"]
+        csv = dl_df.to_csv(index=False, encoding="utf-8-sig")
+        st.download_button(
+            label=f"⬇ CSV 저장 ({len(dl_df):,}건)",
+            data=csv,
+            file_name=f"처리내역_{date.today().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
 
 def validate():
     if not auth_key:
