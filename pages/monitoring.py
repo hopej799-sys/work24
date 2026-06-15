@@ -148,6 +148,7 @@ def fetch(start, end, auth, wanted_no):
 
 def fetch_all(start, end, auth, wanted_no):
     frames = []
+    errors = []
     cur = start
     while cur <= end:
         chunk_end = min(cur + timedelta(days=2), end)
@@ -155,9 +156,11 @@ def fetch_all(start, end, auth, wanted_no):
             xml = fetch(cur, chunk_end, auth, wanted_no)
             chunk_df = parse(xml)
             frames.append(chunk_df)
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"{cur.strftime('%Y-%m-%d')}~{chunk_end.strftime('%Y-%m-%d')}: {e}")
         cur = chunk_end + timedelta(days=1)
+    if errors:
+        st.warning("일부 구간 조회 실패:\n" + "\n".join(errors))
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
@@ -260,6 +263,16 @@ if search_btn:
         except Exception as e:
             st.error(f"오류 발생: {e}")
             st.stop()
+
+        if raw_df.empty:
+            # 첫 청크 응답 원문 확인
+            try:
+                chunk_end = min(start_date + timedelta(days=2), end_date)
+                xml_raw = fetch(start_date, chunk_end, auth_key, wanted_auth_no)
+                with st.expander("🔍 API 응답 원문 (디버그)", expanded=True):
+                    st.code(xml_raw[:2000], language="xml")
+            except Exception as e:
+                st.error(f"API 직접 호출 실패: {e}")
 
     if raw_df.empty:
         st.session_state["base_df"]  = raw_df
