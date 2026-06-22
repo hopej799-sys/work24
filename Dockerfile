@@ -47,6 +47,7 @@ RUN printf '#!/bin/sh\nnginx\nexec streamlit run /app/app.py --server.port=8501 
 # non-root 사용자 (UID/GID 1000)
 RUN groupadd -g 1000 app && useradd -u 1000 -g 1000 -m -s /bin/bash app \
  && chown -R app:app /app \
+ && mkdir -p /var/cache/nginx /var/log/nginx \
  && chown -R app:app /var/cache/nginx /var/log/nginx \
  && mkdir -p /tmp/nginx-client /tmp/nginx-proxy \
  && chown -R app:app /tmp/nginx-client /tmp/nginx-proxy
