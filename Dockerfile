@@ -3,7 +3,7 @@ FROM public.ecr.aws/docker/library/python:3.14-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends nginx \
+ && apt-get install -y --no-install-recommends nginx build-essential \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
