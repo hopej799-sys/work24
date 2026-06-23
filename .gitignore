@@ -4,4 +4,4 @@ memo_store.json
 __pycache__/
 *.pyc
 .env
-.streamlit/secrets.toml
+.streamlit/secrets.toml.example
