@@ -40,6 +40,14 @@ RUN sed -i '/^user /d' /etc/nginx/nginx.conf \
  && printf 'client_body_temp_path /tmp/nginx-client;\nproxy_temp_path /tmp/nginx-proxy;\n' \
     > /etc/nginx/conf.d/tmp_paths.conf
 
+# Supabase 시크릿 (빌드 시 CI/CD 변수로 주입)
+ARG SUPABASE_URL
+ARG SUPABASE_KEY
+ARG AUTH_KEY
+RUN mkdir -p /app/.streamlit && \
+    printf '[supabase]\nurl = "%s"\nkey = "%s"\n\nauth_key = "%s"\n' \
+    "$SUPABASE_URL" "$SUPABASE_KEY" "$AUTH_KEY" > /app/.streamlit/secrets.toml
+
 # 시작 스크립트
 RUN printf '#!/bin/sh\nnginx\nexec streamlit run /app/app.py --server.port=8501 --server.address=127.0.0.1 --server.headless=true\n' \
     > /app/start.sh && chmod +x /app/start.sh
