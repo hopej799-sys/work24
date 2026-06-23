@@ -42,7 +42,7 @@ RUN sed -i '/^user /d' /etc/nginx/nginx.conf \
 
 # 시작 스크립트 (별도 파일로 관리)
 COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+RUN sed -i 's/\r$//' /app/start.sh && chmod +x /app/start.sh
 
 # non-root 사용자 (UID/GID 1000)
 RUN groupadd -g 1000 app && useradd -u 1000 -g 1000 -m -s /bin/bash app \
