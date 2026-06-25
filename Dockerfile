@@ -35,10 +35,10 @@ server {
 EOF
 
 # nginx non-root 실행 설정
+# conf.d 방식은 nginx.conf에 include가 없으면 무시되므로, http 블록에 직접 삽입
 RUN sed -i '/^user /d' /etc/nginx/nginx.conf \
  && sed -i 's|pid /run/nginx.pid;|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
- && printf 'client_body_temp_path /tmp/nginx-client;\nproxy_temp_path /tmp/nginx-proxy;\nfastcgi_temp_path /tmp/nginx-fastcgi;\n' \
-    > /etc/nginx/conf.d/tmp_paths.conf
+ && sed -i 's|http {|http {\n\tclient_body_temp_path /tmp/nginx-client;\n\tproxy_temp_path    /tmp/nginx-proxy;\n\tfastcgi_temp_path  /tmp/nginx-fastcgi;\n\tuwsgi_temp_path    /tmp/nginx-uwsgi;\n\tscgi_temp_path     /tmp/nginx-scgi;|' /etc/nginx/nginx.conf
 
 # 시작 스크립트 (별도 파일로 관리)
 COPY start.sh /app/start.sh
@@ -49,8 +49,8 @@ RUN groupadd -g 1000 app && useradd -u 1000 -g 1000 -m -s /bin/bash app \
  && chown -R app:app /app \
  && mkdir -p /var/cache/nginx /var/log/nginx \
  && chown -R app:app /var/cache/nginx /var/log/nginx \
- && mkdir -p /tmp/nginx-client /tmp/nginx-proxy /tmp/nginx-fastcgi \
- && chown -R app:app /tmp/nginx-client /tmp/nginx-proxy /tmp/nginx-fastcgi
+ && mkdir -p /tmp/nginx-client /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi \
+ && chown -R app:app /tmp/nginx-client /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi
 
 ENV HOME=/home/app
 USER 1000:1000
