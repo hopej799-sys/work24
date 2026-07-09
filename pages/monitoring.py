@@ -86,6 +86,37 @@ def _get_pending_from_editor():
     return result
 
 
+# TEMP DIAGNOSTIC — b-pipeline(dev.jobko.io) 환경에서 Supabase DNS 실패 원인 확인용.
+# 원인 확인 후 이 블록은 제거한다.
+def _temp_network_diag():
+    import socket
+
+    st.subheader("🔧 임시 네트워크 진단 (확인 후 제거 예정)")
+
+    try:
+        url = st.secrets["supabase"]["url"]
+        st.text(f"secrets.toml supabase.url = {url!r} (길이 {len(url)})")
+    except Exception as e:
+        st.text(f"secrets.toml 읽기 실패: {type(e).__name__}: {e}")
+
+    hosts = [
+        ("ceiymbahytlnwdajhclk.supabase.co", "Supabase (외부 SaaS, 문제의 대상)"),
+        ("www.work24.go.kr", "Work24 공공 API (이 앱이 이미 정상적으로 쓰는 외부 도메인)"),
+        ("work24-monitor.dev.jobko.io", "이 앱 자신의 내부 도메인"),
+    ]
+    for host, desc in hosts:
+        try:
+            ip = socket.gethostbyname(host)
+            st.text(f"✅ DNS 성공: {host} -> {ip}   ({desc})")
+        except Exception as e:
+            st.text(f"❌ DNS 실패: {host} -> {type(e).__name__}: {e}   ({desc})")
+
+    st.divider()
+
+
+_temp_network_diag()
+
+
 # ── 사이드바 ───────────────────────────────────
 with st.sidebar:
     st.title("🔍 조회 조건")
