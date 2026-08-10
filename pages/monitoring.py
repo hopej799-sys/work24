@@ -116,28 +116,6 @@ with st.sidebar:
     st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
     st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
 
-    st.divider()
-    st.markdown("**저장 데이터 내보내기**")
-    _store = load_store()
-    if _store:
-        _dl_df = pd.DataFrame([
-            {"공고번호": k, "처리상태": v["처리상태"], "메모": v["메모"], "상태변경일": v.get("상태변경일", "")}
-            for k, v in _store.items()
-        ])
-        _dl_buf = io.BytesIO()
-        _dl_df.to_excel(_dl_buf, index=False, engine="openpyxl")
-        _dl_buf.seek(0)
-        st.download_button(
-            label=f"📥 처리내역 엑셀 ({len(_dl_df):,}건)",
-            data=_dl_buf,
-            file_name=f"처리내역_{date.today().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            key="dl_store",
-        )
-    else:
-        st.caption("저장된 데이터 없음")
-
 
 def validate():
     if not auth_key:
