@@ -94,8 +94,7 @@ with st.sidebar:
                                   index=date.today().month - 1,
                                   format_func=lambda x: f"{x}월")
     st.divider()
-    st.caption("API 피드백 탭은 인증키가 필요합니다.")
-    auth_key = st.text_input("인증키", type="password", placeholder="발급받은 인증키 입력")
+    auth_key = st.secrets.get("auth_key", "")
     run_btn = st.button("🔎 API 조회", use_container_width=True, type="primary")
 
 # ── 메인 ───────────────────────────────────────
@@ -107,7 +106,7 @@ tab1, tab2 = st.tabs(["📡 Work24 API 피드백", "📋 모니터링 처리 현
 with tab1:
     if run_btn:
         if not auth_key:
-            st.error("인증키를 입력해 주세요.")
+            st.error("서버에 Work24 인증키가 설정되지 않았습니다. 관리자에게 문의해 주세요.")
             st.stop()
 
         with st.spinner(f"{sel_year}년 {sel_month}월 조회 중... (약 10~20초 소요)"):
@@ -140,7 +139,7 @@ with tab1:
         st.dataframe(daily, hide_index=True, use_container_width=True)
 
     else:
-        st.info("← 왼쪽에서 인증키와 조회 월을 선택하고 **API 조회** 버튼을 누르세요.")
+        st.info("← 왼쪽에서 조회 월을 선택하고 **API 조회** 버튼을 누르세요.")
 
 # ── Tab 2: 모니터링 처리 현황 ─────────────────
 with tab2:

@@ -2,6 +2,7 @@
 
 b-pipeline에서 supabase.co 아웃바운드가 막혀 있어 사내 Notion DB로 이전.
 DB 속성: 공고번호(title) / 처리상태(select) / 메모(text) / 상태변경일(date)
+        + 모니터링 항목(DETAIL_COLS) — 저장 시점의 조회 결과를 함께 기록
 """
 import time
 import requests
@@ -9,6 +10,11 @@ import streamlit as st
 
 API = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
+
+# 모니터링 화면 컬럼 → Notion 속성 (구인공고 URL만 url 타입, 나머지는 text)
+DETAIL_COLS = ["오류구분", "모니터링일시", "연계일시", "에러내용",
+               "구인공고 URL", "법위반의심 여부", "법령 맵핑 내용"]
+URL_COL = "구인공고 URL"
 
 
 def _headers():
@@ -40,16 +46,24 @@ def _text(prop):
     return "".join(t.get("plain_text", "") for t in items)
 
 
-def _props(status, memo, changed_at):
-    return {
+def _rich(value):
+    return {"rich_text": [{"text": {"content": value[:2000]}}] if value else []}
+
+
+def _props(status, memo, changed_at, detail=None):
+    props = {
         "처리상태":  {"select": {"name": status}},
-        "메모":      {"rich_text": [{"text": {"content": memo[:2000]}}] if memo else []},
+        "메모":      _rich(memo),
         "상태변경일": {"date": {"start": changed_at} if changed_at else None},
     }
+    for col, val in (detail or {}).items():
+        val = str(val or "")
+        props[col] = {"url": val or None} if col == URL_COL else _rich(val)
+    return props
 
 
 def _fetch_pages() -> dict:
-    """공고번호 → {page_id, 처리상태, 메모, 상태변경일}"""
+    """공고번호 → {page_id, 처리상태, 메모, 상태변경일, 상세}"""
     out = {}
     body = {"page_size": 100}
     while True:
@@ -64,6 +78,8 @@ def _fetch_pages() -> dict:
                 "처리상태":  ((p.get("처리상태") or {}).get("select") or {}).get("name", "미검토"),
                 "메모":      _text(p.get("메모")),
                 "상태변경일": (((p.get("상태변경일") or {}).get("date") or {}).get("start") or "")[:10],
+                "상세": {c: ((p.get(c) or {}).get("url") or "") if c == URL_COL else _text(p.get(c))
+                         for c in DETAIL_COLS},
             }
         if not data.get("has_more"):
             return out
@@ -76,18 +92,24 @@ def load_store() -> dict:
             for k, v in _fetch_pages().items()}
 
 
-def save_store(store: dict, to_delete: set = None):
-    """바뀐 행만 Notion에 반영 (전체 upsert는 API 호출이 많아 diff로 처리)."""
+def save_store(store: dict, to_delete: set = None, details: dict = None):
+    """바뀐 행만 Notion에 반영 (전체 upsert는 API 호출이 많아 diff로 처리).
+
+    details: 공고번호 → {DETAIL_COLS: 값}. 저장하는 행의 모니터링 항목을 함께 기록.
+    """
+    details = details or {}
     current = _fetch_pages()
     for k in (to_delete or set()):
         if k in current:
             _request("PATCH", f"{API}/pages/{current[k]['page_id']}", json={"archived": True})
     for k, v in store.items():
         status, memo, changed_at = v["처리상태"], v.get("메모", "") or "", v.get("상태변경일", "") or ""
+        detail = {c: str(details[k].get(c, "") or "") for c in DETAIL_COLS} if k in details else None
         cur = current.get(k)
-        if cur and (cur["처리상태"], cur["메모"], cur["상태변경일"]) == (status, memo, changed_at):
+        if (cur and (cur["처리상태"], cur["메모"], cur["상태변경일"]) == (status, memo, changed_at)
+                and (detail is None or detail == cur["상세"])):
             continue
-        props = _props(status, memo, changed_at)
+        props = _props(status, memo, changed_at, detail)
         if cur:
             _request("PATCH", f"{API}/pages/{cur['page_id']}", json={"properties": props})
         else:

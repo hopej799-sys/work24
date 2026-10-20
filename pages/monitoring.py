@@ -8,7 +8,7 @@ from datetime import date, timedelta
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from notion_store import load_store, save_store
+from notion_store import load_store, save_store, DETAIL_COLS
 
 st.set_page_config(
     page_title="연계채용정보 모니터링",
@@ -61,8 +61,7 @@ def _get_pending_from_editor():
 with st.sidebar:
     st.title("🔍 조회 조건")
 
-    auth_key = st.text_input("인증키 *", type="password",
-                              placeholder="발급받은 인증키 입력")
+    auth_key = st.secrets.get("auth_key", "")
 
     st.markdown("**조회 기간 *** (최대 31일)")
     col1, col2 = st.columns(2)
@@ -90,7 +89,7 @@ with st.sidebar:
 
 def validate():
     if not auth_key:
-        st.error("인증키를 입력해 주세요.")
+        st.error("서버에 Work24 인증키가 설정되지 않았습니다. 관리자에게 문의해 주세요.")
         return False
     delta = (end_date - start_date).days
     if delta < 0:
@@ -432,7 +431,10 @@ with btn_col:
         pending = _get_pending_from_editor()
         current_store, to_delete_set = build_final_store(pending)
         try:
-            save_store(current_store, to_delete_set)
+            details = {k: {c: row[c] for c in DETAIL_COLS}
+                       for k, row in base_df.set_index("공고번호", drop=False).iterrows()
+                       if k in current_store}
+            save_store(current_store, to_delete_set, details)
         except Exception as e:
             st.error(f"저장 실패: {e}")
             st.stop()

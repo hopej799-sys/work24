@@ -1,3 +1,4 @@
+import hmac
 import streamlit as st
 from pathlib import Path
 
@@ -10,6 +11,20 @@ st.markdown(
 _css = Path(__file__).parent / "style.css"
 if _css.exists():
     st.markdown(f"<style>{_css.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+
+# 접속 비밀번호: 서버 secrets의 app_password (GitLab 변수 BUILD_ENV_APP_PASSWORD). 세션당 1회 입력.
+if not st.session_state.get("authed"):
+    st.title("🔒 연계채용정보 모니터링")
+    with st.form("login"):
+        pw = st.text_input("비밀번호", type="password")
+        ok = st.form_submit_button("들어가기", type="primary")
+    if ok:
+        expected = st.secrets.get("app_password", "")
+        if expected and hmac.compare_digest(pw.encode(), expected.encode()):
+            st.session_state["authed"] = True
+            st.rerun()
+        st.error("비밀번호가 맞지 않습니다.")
+    st.stop()
 
 pg = st.navigation([
     st.Page("pages/monitoring.py", title="📋 모니터링", icon="🔍"),

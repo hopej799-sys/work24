@@ -4,11 +4,12 @@ if [ -f /app/.env ]; then
 fi
 mkdir -p /app/.streamlit
 cat > /app/.streamlit/secrets.toml <<EOF
+auth_key = "${AUTH_KEY}"
+app_password = "${APP_PASSWORD}"
+
 [notion]
 token = "${NOTION_TOKEN}"
 database_id = "${NOTION_DATABASE_ID}"
-
-auth_key = "${AUTH_KEY}"
 EOF
 mkdir -p /tmp/nginx-client /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi
 nginx
