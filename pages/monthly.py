@@ -5,18 +5,13 @@ import pandas as pd
 import calendar
 import time
 from datetime import date, timedelta
-from supabase import create_client
+from notion_store import load_store
 
 st.set_page_config(page_title="월별 현황", page_icon="📊", layout="wide")
 
 API_URL = "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo220L01.do"
 
 STATUS_ORDER = ["검토중", "검토완료", "이상없음", "게재중단"]
-
-
-@st.cache_resource
-def _sb():
-    return create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
 
 
 def fetch_chunk(start, end, auth):
@@ -75,12 +70,9 @@ def build_daily(raw):
 
 @st.cache_data(ttl=60)
 def load_cs_processing(year, month):
-    """Supabase memo_store에서 해당 월 처리 내역 로드."""
-    rows = (_sb().table("memo_store")
-                 .select("status, status_changed_at")
-                 .not_.is_("status_changed_at", "null")
-                 .neq("status_changed_at", "")
-                 .execute().data)
+    """Notion 저장소에서 해당 월 처리 내역 로드."""
+    rows = [{"status": v["처리상태"], "status_changed_at": v["상태변경일"]}
+            for v in load_store().values() if v.get("상태변경일")]
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)

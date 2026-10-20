@@ -4,9 +4,9 @@ if [ -f /app/.env ]; then
 fi
 mkdir -p /app/.streamlit
 cat > /app/.streamlit/secrets.toml <<EOF
-[supabase]
-url = "${SUPABASE_URL}"
-key = "${SUPABASE_KEY}"
+[notion]
+token = "${NOTION_TOKEN}"
+database_id = "${NOTION_DATABASE_ID}"
 
 auth_key = "${AUTH_KEY}"
 EOF

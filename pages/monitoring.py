@@ -8,7 +8,7 @@ from datetime import date, timedelta
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from supabase import create_client
+from notion_store import load_store, save_store
 
 st.set_page_config(
     page_title="연계채용정보 모니터링",
@@ -30,36 +30,6 @@ COLUMNS = [
 ]
 
 STATUS_OPTIONS = ["미검토", "검토중", "검토완료", "이상없음", "게재중단"]
-
-
-@st.cache_resource
-def _sb():
-    return create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["key"])
-
-
-@st.cache_data(ttl=5)
-def load_store() -> dict:
-    rows = _sb().table("memo_store").select("wanted_auth_no, status, memo, status_changed_at").execute().data
-    return {
-        r["wanted_auth_no"]: {
-            "처리상태": r["status"],
-            "메모": r["memo"],
-            "상태변경일": r.get("status_changed_at") or "",
-        }
-        for r in rows
-    }
-
-
-def save_store(store: dict, to_delete: set = None):
-    sb = _sb()
-    if to_delete:
-        sb.table("memo_store").delete().in_("wanted_auth_no", list(to_delete)).execute()
-    if store:
-        rows = [{"wanted_auth_no": k, "status": v["처리상태"], "memo": v["메모"],
-                 "status_changed_at": v.get("상태변경일", "")}
-                for k, v in store.items()]
-        sb.table("memo_store").upsert(rows).execute()
-    load_store.clear()
 
 
 def _get_pending_from_editor():
