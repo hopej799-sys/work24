@@ -3,6 +3,7 @@ import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
 import io
+import time
 from datetime import date, timedelta
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -141,9 +142,17 @@ def fetch(start, end, auth, wanted_no):
     }
     if wanted_no:
         params["wantedAuthNo"] = wanted_no
-    resp = requests.get(API_URL, params=params, timeout=30)
-    resp.raise_for_status()
-    return resp.text
+    # Work24 응답 지연 대비: 연결 10초 / 응답 90초, 실패 시 최대 3회 재시도
+    last_err = None
+    for attempt in range(3):
+        try:
+            resp = requests.get(API_URL, params=params, timeout=(10, 90))
+            resp.raise_for_status()
+            return resp.text
+        except (requests.Timeout, requests.ConnectionError) as e:
+            last_err = e
+            time.sleep(2 * (attempt + 1))
+    raise last_err
 
 
 def fetch_all(start, end, auth, wanted_no):
@@ -159,6 +168,7 @@ def fetch_all(start, end, auth, wanted_no):
         except Exception as e:
             errors.append(f"{cur.strftime('%Y-%m-%d')}~{chunk_end.strftime('%Y-%m-%d')}: {e}")
         cur = chunk_end + timedelta(days=1)
+    st.session_state["_fetch_errors"] = errors
     if errors:
         st.warning("일부 구간 조회 실패:\n" + "\n".join(errors))
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
@@ -264,8 +274,8 @@ if search_btn:
             st.error(f"오류 발생: {e}")
             st.stop()
 
-        if raw_df.empty:
-            # 첫 청크 응답 원문 확인
+        if raw_df.empty and not st.session_state.get("_fetch_errors"):
+            # 첫 청크 응답 원문 확인 (타임아웃으로 실패한 경우엔 재호출하지 않음)
             try:
                 chunk_end = min(start_date + timedelta(days=2), end_date)
                 xml_raw = fetch(start_date, chunk_end, auth_key, wanted_auth_no)

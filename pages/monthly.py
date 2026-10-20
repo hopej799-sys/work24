@@ -3,6 +3,7 @@ import requests
 import xml.etree.ElementTree as ET
 import pandas as pd
 import calendar
+import time
 from datetime import date, timedelta
 from supabase import create_client
 
@@ -19,13 +20,22 @@ def _sb():
 
 
 def fetch_chunk(start, end, auth):
-    resp = requests.get(API_URL, params={
+    params = {
         "authKey": auth, "returnType": "XML", "callTp": "D",
         "ifDtmStdt": start.strftime("%Y%m%d"),
         "ifDtmEndt": end.strftime("%Y%m%d"),
-    }, timeout=30)
-    resp.raise_for_status()
-    return resp.text
+    }
+    # Work24 응답 지연 대비: 연결 10초 / 응답 90초, 실패 시 최대 3회 재시도
+    last_err = None
+    for attempt in range(3):
+        try:
+            resp = requests.get(API_URL, params=params, timeout=(10, 90))
+            resp.raise_for_status()
+            return resp.text
+        except (requests.Timeout, requests.ConnectionError) as e:
+            last_err = e
+            time.sleep(2 * (attempt + 1))
+    raise last_err
 
 
 def fetch_month(year, month, auth):
