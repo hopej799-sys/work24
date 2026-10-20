@@ -26,9 +26,17 @@ if not st.session_state.get("authed"):
         st.error("비밀번호가 맞지 않습니다.")
     st.stop()
 
+# 로그인 후 사이드바 상단 메뉴로 세 화면 이동
 pg = st.navigation([
-    st.Page("pages/monitoring.py", title="📋 모니터링", icon="🔍"),
-    st.Page("pages/monthly.py",    title="📊 월별 현황", icon="📊"),
-    st.Page("pages/guide.py",      title="📖 운영 가이드", icon="📖"),
-], position="hidden")
+    st.Page("pages/monitoring.py", title="모니터링",   icon="📋", default=True),
+    st.Page("pages/monthly.py",    title="월별 통계",  icon="📊"),
+    st.Page("pages/guide.py",      title="운영 가이드", icon="📖"),
+], position="sidebar")
+
+with st.sidebar:
+    if st.button("로그아웃", use_container_width=True):
+        st.session_state.pop("authed", None)
+        st.rerun()
+    st.divider()
+
 pg.run()

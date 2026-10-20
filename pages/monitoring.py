@@ -81,11 +81,6 @@ with st.sidebar:
 
     search_btn = st.button("🔎 조회", use_container_width=True, type="primary")
 
-    st.divider()
-    st.markdown("**관리**")
-    st.page_link("pages/monthly.py", label="📊 월별 현황", use_container_width=True)
-    st.page_link("pages/guide.py", label="📖 운영 가이드", use_container_width=True)
-
 
 def validate():
     if not auth_key:
