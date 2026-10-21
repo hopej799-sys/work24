@@ -433,8 +433,8 @@
         <line x1="340" y1="76" x2="340" y2="108" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
         <!-- Step 2 -->
         <rect x="240" y="108" width="200" height="56" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
-        <text x="340" y="131" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#0C447C">② 인증키 입력</text>
-        <text x="340" y="150" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#185FA5">사이드바에서 인증키 입력</text>
+        <text x="340" y="131" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="14" font-weight="600" fill="#0C447C">② 비밀번호 로그인</text>
+        <text x="340" y="150" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="12" fill="#185FA5">별도 안내받은 비밀번호 입력</text>
         <line x1="340" y1="164" x2="340" y2="196" stroke="#9e9b95" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
         <!-- Step 3 -->
         <rect x="240" y="196" width="200" height="56" rx="8" fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
@@ -543,10 +543,11 @@
           https://work24-monitor.dev.jobko.io/
         </a>
       </div>
-      <p style="font-size:13.5px; color:var(--text-secondary);">별도 회원가입·로그인 없음 — <strong>인증키만 입력</strong>하면 바로 사용 가능합니다.</p>
+      <p style="font-size:13.5px; color:var(--text-secondary);">접속하면 <strong>비밀번호 입력 화면</strong>이 나옵니다. 비밀번호를 입력하고 <strong>들어가기</strong>를 누르면 바로 사용할 수 있습니다.</p>
       <div class="callout warn" style="margin-top:12px;">
-        ⚠️ 현재는 브라우저를 새로 열 때마다 인증키를 입력해야 합니다. 추후 자동 적용 예정.
+        🔑 비밀번호는 담당자가 <strong>별도로 안내</strong>합니다. 외부에 공유하지 마세요.
       </div>
+      <p style="font-size:13px; color:var(--text-secondary); margin-top:12px;">· 로그인 후 왼쪽 사이드바 메뉴에서 <strong>모니터링 · 월별 통계 · 운영 가이드</strong>로 이동할 수 있습니다.<br>· 브라우저를 새로 열면 비밀번호를 다시 입력해야 합니다. 사용을 마치면 <strong>로그아웃</strong>을 눌러 주세요.</p>
     </div>
   </div>
 
@@ -559,15 +560,15 @@
     <div class="card">
       <div class="code-block">┌─────────────────┬──────────────────────────────────────────┐
 │                 │  📊 상단 지표                             │
-│  🔍 사이드바    │  총 건수 | 미검토 | 처리완료             │
-│                 ├──────────────────────────────────────────┤
-│  • 인증키       │  🔧 결과 필터                            │
-│  • 조회 기간    │  처리상태 | 오류구분 | 법위반의심 등      │
-│  • 공고번호     ├──────────────────────────────────────────┤
-│  • 조회 필터    │  📋 데이터 테이블                        │
-│                 │  공고 목록 — 처리상태·메모 직접 편집      │
-│  🔎 조회 버튼   ├──────────────────────────────────────────┤
-│  🗑️ 메모 초기화 │  💾 저장    📥 엑셀 다운로드             │
+│  📋 메뉴        │  총 건수 | 미검토 | 처리완료             │
+│  (모니터링 ·    ├──────────────────────────────────────────┤
+│   월별 통계 ·   │  🔧 결과 필터                            │
+│   운영 가이드)  │  처리상태 | 오류구분 | 법위반의심 등      │
+│  🔍 조회 조건   ├──────────────────────────────────────────┤
+│  • 조회 기간    │  📋 데이터 테이블                        │
+│  • 공고번호     │  공고 목록 — 처리상태·메모 직접 편집      │
+│  • 조회 필터    ├──────────────────────────────────────────┤
+│  🔎 조회 버튼   │  💾 저장    📥 엑셀 다운로드             │
 └─────────────────┴──────────────────────────────────────────┘</div>
     </div>
   </div>
@@ -580,12 +581,6 @@
     </div>
     <div class="card">
       <ol class="o-list">
-        <li>
-          <div>
-            <strong>사이드바에서 인증키 입력</strong>
-            <div class="sub">인증키: <code>3a05f3da-5187-4d62-a4b4-23ac86bdfce1</code></div>
-          </div>
-        </li>
         <li>
           <div>
             <strong>조회 기간 설정</strong> — 시작일 ~ 종료일 <span style="color:var(--text-muted); font-size:12px;">(최대 3일)</span>
