@@ -30,9 +30,15 @@ def _db_id():
 
 
 def _request(method, url, **kwargs):
-    # Notion 레이트리밋(초당 약 3회) 대응: 429/5xx면 잠시 후 재시도
+    # Notion 레이트리밋(초당 약 3회) 대응: 429/5xx/타임아웃이면 잠시 후 재시도
     for attempt in range(5):
-        resp = requests.request(method, url, headers=_headers(), timeout=(10, 30), **kwargs)
+        try:
+            resp = requests.request(method, url, headers=_headers(), timeout=(10, 30), **kwargs)
+        except (requests.Timeout, requests.ConnectionError):
+            if attempt == 4:
+                raise
+            time.sleep(1 + attempt)
+            continue
         if resp.status_code == 429 or resp.status_code >= 500:
             time.sleep(float(resp.headers.get("Retry-After", 1 + attempt)))
             continue
