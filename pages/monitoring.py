@@ -78,6 +78,8 @@ with st.sidebar:
         "고용형태 에러 제외",
         help="에러내용에 '고용형태'가 포함된 항목을 조회 결과에서 제외합니다",
     )
+    # 결과 필터 체크박스 자리 (건수가 필요해 조회 후 아래에서 채움)
+    result_filter_box = st.container()
 
     search_btn = st.button("🔎 조회", use_container_width=True, type="primary")
 
@@ -337,13 +339,12 @@ with st.expander("🔧 결과 필터", expanded=True):
         status_filter = st.selectbox("처리 상태", ["전체", "미검토", "검토중", "검토완료", "이상없음", "게재중단"])
     with fc2:
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링만 보기", "구인모니터링만 보기"])
-    cb1, cb2, cb3 = st.columns(3)
-    with cb1:
-        law_volt_only = st.checkbox(f"법위반의심 Y만 ({law_volt_count:,}건)")
-    with cb2:
-        law_only      = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)")
-    with cb3:
-        memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)")
+
+# 체크박스는 사이드바 '조회 필터' 아래 (고용형태 에러 제외 다음). 건수가 바뀌어도 상태 유지되게 key 고정
+with result_filter_box:
+    law_only      = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)", key="f_law_map")
+    law_volt_only = st.checkbox(f"법위반의심 Y만 ({law_volt_count:,}건)", key="f_law_volt")
+    memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)", key="f_memo")
 
 filtered = base_df.copy()
 if status_filter != "전체":
