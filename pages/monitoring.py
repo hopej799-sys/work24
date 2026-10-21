@@ -78,8 +78,9 @@ with st.sidebar:
         "고용형태 에러 제외",
         help="에러내용에 '고용형태'가 포함된 항목을 조회 결과에서 제외합니다",
     )
-    # 결과 필터 체크박스 자리 (건수가 필요해 조회 후 아래에서 채움)
-    result_filter_box = st.container()
+    law_only      = st.checkbox("법령 맵핑 내용 있는것만", key="f_law_map")
+    law_volt_only = st.checkbox("법위반의심 Y만", key="f_law_volt")
+    memo_only     = st.checkbox("메모 있는것만", key="f_memo")
 
     search_btn = st.button("🔎 조회", use_container_width=True, type="primary")
 
@@ -288,14 +289,23 @@ if base_df.empty:
     st.info("조회된 데이터가 없습니다.")
     st.stop()
 
+# ── 사이드바 조회 필터 최종값 적용 (대시보드·표·엑셀 모두 이 기준) ──
+view_df = base_df
+if law_only:
+    view_df = view_df[view_df["법령 맵핑 내용"].str.strip().ne("")]
+if law_volt_only:
+    view_df = view_df[view_df["법위반의심 여부"] == "Y"]
+if memo_only:
+    view_df = view_df[view_df["메모"].str.strip().ne("")]
+
 # ── 요약 지표 (저장된 상태 기준) ──────────────
 import plotly.graph_objects as go
 
-total         = len(base_df)
-이상없음_count = (base_df["처리상태"] == "이상없음").sum()
-게재중단_count = (base_df["처리상태"] == "게재중단").sum()
-검토중_count   = (base_df["처리상태"] == "검토중").sum()
-검토완료_count = (base_df["처리상태"] == "검토완료").sum()
+total         = len(view_df)
+이상없음_count = (view_df["처리상태"] == "이상없음").sum()
+게재중단_count = (view_df["처리상태"] == "게재중단").sum()
+검토중_count   = (view_df["처리상태"] == "검토중").sum()
+검토완료_count = (view_df["처리상태"] == "검토완료").sum()
 미검토_count   = total - 이상없음_count - 게재중단_count - 검토중_count - 검토완료_count
 
 left, right = st.columns([3, 2])
@@ -329,10 +339,6 @@ with right:
 st.divider()
 
 # ── 결과 필터 ─────────────────────────────────
-law_map_count  = base_df["법령 맵핑 내용"].str.strip().ne("").sum()
-memo_count     = base_df["메모"].str.strip().ne("").sum()
-law_volt_count = (base_df["법위반의심 여부"] == "Y").sum()
-
 with st.expander("🔧 결과 필터", expanded=True):
     fc1, fc2 = st.columns(2)
     with fc1:
@@ -340,25 +346,13 @@ with st.expander("🔧 결과 필터", expanded=True):
     with fc2:
         err_type_filter = st.selectbox("오류구분", ["전체", "사전필터링만 보기", "구인모니터링만 보기"])
 
-# 체크박스는 사이드바 '조회 필터' 아래 (고용형태 에러 제외 다음). 건수가 바뀌어도 상태 유지되게 key 고정
-with result_filter_box:
-    law_only      = st.checkbox(f"법령 맵핑 내용 있는것만 ({law_map_count:,}건)", key="f_law_map")
-    law_volt_only = st.checkbox(f"법위반의심 Y만 ({law_volt_count:,}건)", key="f_law_volt")
-    memo_only     = st.checkbox(f"메모 있는것만 ({memo_count:,}건)", key="f_memo")
-
-filtered = base_df.copy()
+filtered = view_df.copy()
 if status_filter != "전체":
     filtered = filtered[filtered["처리상태"] == status_filter]
 if err_type_filter == "사전필터링만 보기":
     filtered = filtered[filtered["오류구분"].str.contains("사전", na=False)]
 elif err_type_filter == "구인모니터링만 보기":
     filtered = filtered[filtered["오류구분"].str.contains("구인", na=False)]
-if law_volt_only:
-    filtered = filtered[filtered["법위반의심 여부"] == "Y"]
-if law_only:
-    filtered = filtered[filtered["법령 맵핑 내용"].str.strip().ne("")]
-if memo_only:
-    filtered = filtered[filtered["메모"].str.strip().ne("")]
 
 filtered_display = filtered.reset_index(drop=True)
 st.caption(f"필터 결과: {len(filtered_display):,}건 / 전체 {total:,}건")
@@ -453,7 +447,7 @@ with btn_col:
         st.rerun()
 
 with dl_col:
-    excel_buf = make_excel(base_df, start_saved, end_saved)
+    excel_buf = make_excel(view_df, start_saved, end_saved)  # 사이드바 조회 필터 적용 결과
     filename  = f"모니터링결과_{start_saved.strftime('%Y%m%d')}-{end_saved.strftime('%Y%m%d')}.xlsx"
     st.download_button(
         label="📥 엑셀 다운로드 (전체)",
