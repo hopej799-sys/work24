@@ -20,7 +20,10 @@ if not st.session_state.get("authed"):
         ok = st.form_submit_button("들어가기", type="primary")
     if ok:
         expected = st.secrets.get("app_password", "")
-        if expected and hmac.compare_digest(pw.encode(), expected.encode()):
+        if not expected:
+            st.error("서버에 접속 비밀번호(APP_PASSWORD)가 설정되지 않았습니다. 관리자에게 문의해 주세요.")
+            st.stop()
+        if hmac.compare_digest(pw.encode(), expected.encode()):
             st.session_state["authed"] = True
             st.rerun()
         st.error("비밀번호가 맞지 않습니다.")
